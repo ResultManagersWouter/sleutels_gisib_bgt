@@ -43,19 +43,19 @@ if __name__ == '__main__':
     bgt = read_bgt(fp_bgt=os.environ.get('FP_BGT'),columns=BGT_COLUMNS)
 
     level = Gebied.BUURT.value
-    area = "Holendrecht-Oost"
-
-    filtered_assets = {
-        key: df[df[level] == area].copy()
-        for key, df in assets.items()
-    }
+    area = "all"
+    #
+    # filtered_assets = {
+    #     key: df[df[level] == area].copy()
+    #     for key, df in assets.items()
+    # }
     # check if there is overlap in gisib
-    validator = GisibValidator(assets=filtered_assets,gisib_id_col="guid",gpkg_path=f"overlaps_{area.lower()}.gpkg")
+    validator = GisibValidator(assets=assets,gisib_id_col="guid",gpkg_path=f"overlaps_{area.lower()}.gpkg")
     valid = validator.run_all_validations()
     # if there is no overlap, continue
     if valid.empty:
         controller = Controller(
-            assets=filtered_assets,
+            assets=assets,
             bgt =bgt,
              gisib_id_col = "guid",
              bgt_id_col="lokaalid",
