@@ -36,34 +36,33 @@ if __name__ == '__main__':
                                             layer=AssetType.GROENOBJECTEN),
         AssetType.VERHARDINGEN: read_gisib(fp_gisib=os.environ.get("FP_VRH"),
                                            columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN],
-                                           layer=AssetType.VERHARDINGEN).rename(
-            columns={"type_plus": "type_object_plus"}),
+                                           layer=AssetType.VERHARDINGEN),
     }
 
-    bgt = read_bgt(fp_bgt=os.environ.get('FP_BGT'),columns=BGT_COLUMNS)
-
-    level = Gebied.BUURT.value
-    area = "all"
+    # bgt = read_bgt(fp_bgt=os.environ.get('FP_BGT'),columns=BGT_COLUMNS)
     #
-    # filtered_assets = {
-    #     key: df[df[level] == area].copy()
-    #     for key, df in assets.items()
-    # }
-    # check if there is overlap in gisib
-    validator = GisibValidator(assets=assets,gisib_id_col="guid",gpkg_path=f"overlaps_{area.lower()}.gpkg")
-    valid = validator.run_all_validations()
-    # if there is no overlap, continue
-    if valid.empty:
-        controller = Controller(
-            assets=assets,
-            bgt =bgt,
-             gisib_id_col = "guid",
-             bgt_id_col="lokaalid",
-             gisib_hoogteligging_col="relatieve_hoogteligging",
-             bgt_hoogteligging_col="hoogtelig")
-        buckets = controller.create_buckets()
-        if buckets:
-            controller.match_gisib_bgt_ids(suffix=area.lower(),directory=date.today().isoformat() +"_" +area.lower())
+    # level = Gebied.BUURT.value
+    # area = "all"
+    # #
+    # # filtered_assets = {
+    # #     key: df[df[level] == area].copy()
+    # #     for key, df in assets.items()
+    # # }
+    # # check if there is overlap in gisib
+    # validator = GisibValidator(assets=assets,gisib_id_col="guid",gpkg_path=f"overlaps_{area.lower()}.gpkg")
+    # valid = validator.run_all_validations()
+    # # if there is no overlap, continue
+    # if valid.empty:
+    #     controller = Controller(
+    #         assets=assets,
+    #         bgt =bgt,
+    #          gisib_id_col = "guid",
+    #          bgt_id_col="lokaalid",
+    #          gisib_hoogteligging_col="relatieve_hoogteligging",
+    #          bgt_hoogteligging_col="hoogtelig")
+    #     buckets = controller.create_buckets()
+    #     if buckets:
+    #         controller.match_gisib_bgt_ids(suffix=area.lower(),directory=date.today().isoformat() +"_" +area.lower())
     # results = controller.run()
 
     # # Run pre-validation

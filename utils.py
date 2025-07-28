@@ -1,7 +1,8 @@
 from typing import List, Optional, Union
 import geopandas as gpd
 import pyogrio
-from asset_config import AssetType  # <- Import your enum
+from asset_config import AssetType
+from columns_config import column_mappings
 
 def read_bgt(fp_bgt: str, columns: List[str]) -> gpd.GeoDataFrame:
     """
@@ -37,7 +38,7 @@ def read_gisib(
     Returns:
         gpd.GeoDataFrame: Cleaned GISIB data with fixed geometries.
     """
-    # Allow both AssetType enum and string for layer name
+    # Determine layer name
     if layer is None:
         layer_name = pyogrio.list_layers(fp_gisib)[0]
     elif isinstance(layer, AssetType):
@@ -45,5 +46,24 @@ def read_gisib(
     else:
         layer_name = layer
 
-    gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns)
+    # Check casing of first column to determine column mode
+    first_column = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", rows=1).columns[0]
+
+    # Case 1: uppercase → map to lowercase before reading
+    if first_column == "ID":
+        mapper = column_mappings.get(layer, {})
+        reverse_mapper = {v: k for k, v in mapper.items()}  # UPPER → lower
+        if columns:
+            mapped_columns = [reverse_mapper.get(col, col) for col in columns]
+        else:
+            mapped_columns = None
+        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns)
+        gdf = gdf.rename(columns=mapper)
+
+    # Case 2: lowercase → read and map after reading
+    else:
+        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns)
+        gdf = gdf.rename(columns=column_mappings.get(layer, {}))
+
     return gdf.assign(geometry=lambda df: df.geometry.buffer(0))
+

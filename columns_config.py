@@ -58,7 +58,7 @@ ASSET_SCHEMAS = {
     ],
 }
 
-mappings = {
+column_mappings = {
     AssetType.TERREINDEEL: {
     "id": "ID",
     "guid": "GUID",
