@@ -9,15 +9,17 @@ BASE_BUCKETS = [
     # gisib and BGT have a 1:1 relationship without other intersections with overlap above the set threshhold
     ("BUCKET1", "geom_1_to_1"),
     # merge gisib objects back to the geometry of BGT because of same attributes for the gisib objects
-    ("BUCKET2", "gisib_merge"),
-    # gisib is more detailed than BGT - N:1, split the BGT objects
-    ("BUCKET3", "bgt_split"),
     # BGT is more detailed than gisib, 1 object in gisib relates to N objects in gisib - split BGT
-    ("BUCKET4", "gisib_split"),
+    ("BUCKET2", "gisib_split"),
+    ("BUCKET3", "gisib_merge"),
+    # gisib is more detailed than BGT - N:1, split the BGT objects
+    ("BUCKET4", "bgt_split"),
+    # BGT is more detailed than gisib, 1 object in gisib relates to N objects in gisib - split BGT
+    ("BUCKET5", "gisib_split"),
     # after these matches, a check is done to see if a gisib object has a main match with a BGT object above 75% both sides
-    ("BUCKET5", "geom_75_match"),
+    ("BUCKET6", "geom_75_match"),
     # a smaller gisib object in a larger BGT object. gisib <= 50% size of BGT object with a overlap of at least 85%
-    ("BUCKET6", "clip_match"),
+    ("BUCKET7", "clip_match"),
     # Others
     ("REMAINING", "remaining"),
 ]
