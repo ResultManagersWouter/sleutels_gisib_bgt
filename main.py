@@ -20,6 +20,7 @@ logging.basicConfig(
 gisib_id_col = "GUID"
 bgt_id_col = "lokaalid"
 gisib_hoogteligging_col = "RELATIEVE_HOOGTELIGGING"
+gisib_objecttype_col = "OBJECTTYPE"
 
 
 # Press the green button in the gutter to run the script.
@@ -47,7 +48,11 @@ if __name__ == '__main__':
     #     for key, df in assets.items()
     # }
     # check if there is overlap in gisib
-    validator = GisibValidator(assets=assets,gisib_id_col=gisib_id_col,gpkg_path=f"overlaps_{area.lower()}.gpkg")
+    validator = GisibValidator(assets=assets,
+                               gisib_id_col=gisib_id_col,
+                               relatieve_hoogteligging_col=gisib_hoogteligging_col,
+                               objecttype_col=gisib_objecttype_col,
+                               gpkg_path=f"overlaps_{area.lower()}.gpkg")
     valid = validator.run_all_validations()
     # # if there is no overlap, continue
     if valid.empty:
