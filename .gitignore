@@ -9,6 +9,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 *.gpkg
+*.zip
 *.gpkg-shm
 *.gpkg-wal
 notebooks/
