@@ -7,6 +7,8 @@ class GisibValidator:
     def __init__(self,
                  assets: dict[str, gpd.GeoDataFrame],
                  gisib_id_col : str,
+                 relatieve_hoogteligging_col: str,
+                 objecttype_col: str,
                  threshold: float =0.5,
                  write_outputs : dict[str,bool] = {"internal" : False,
                                                                           "cross" : False,
@@ -26,6 +28,8 @@ class GisibValidator:
         self.threshold = threshold
         self.gisib = self._combine_assets()
         self.write_outputs = write_outputs
+        self.objecttype_col = objecttype_col
+        self.relatieve_hoogteligging_col = relatieve_hoogteligging_col
         if gpkg_path is None:
             today_str = date.today().isoformat()
             gpkg_path = f"overlaps_{today_str}.gpkg"
@@ -69,23 +73,23 @@ class GisibValidator:
 
                     def normalize_row(row):
                         pair = sorted([
-                            (str(row[f'{self.gisib_id_col}_1']), str(row['objecttype_1'])),
-                            (str(row[f'{self.gisib_id_col}_2']), str(row['objecttype_2']))
+                            (str(row[f'{self.gisib_id_col}_1']), str(row[f'{self.objecttype_col}_1'])),
+                            (str(row[f'{self.gisib_id_col}_2']), str(row[f'{self.objecttype_col}_2']))
                         ])
                         return pd.Series({
                             f'{self.gisib_id_col}_1': pair[0][0],
-                            'objecttype_1': pair[0][1],
+                            f'{self.objecttype_col}_1': pair[0][1],
                             f'{self.gisib_id_col}_2': pair[1][0],
-                            'objecttype_2': pair[1][1]
+                            f'{self.objecttype_col}_2': pair[1][1]
                         })
 
-                    overlaps[[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2']] = overlaps.apply(normalize_row,
+                    overlaps[[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2']] = overlaps.apply(normalize_row,
                                                                                                           axis=1)
                     overlaps = (
                         overlaps
                         .drop_duplicates(
-                        subset=[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2'])
-                        .loc[:,[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2', 'geometry']]
+                        subset=[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2'])
+                        .loc[:,[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2', 'geometry']]
                         .set_geometry("geometry")
                     )
                     # Keep only columns you want, with "geometry" as the actual intersection
@@ -116,23 +120,23 @@ class GisibValidator:
 
                     def normalize_row(row):
                         pair = sorted([
-                            (str(row[f'{self.gisib_id_col}_1']), str(row['objecttype_1'])),
-                            (str(row[f'{self.gisib_id_col}_2']), str(row['objecttype_2']))
+                            (str(row[f'{self.gisib_id_col}_1']), str(row[f'{self.objecttype_col}_1'])),
+                            (str(row[f'{self.gisib_id_col}_2']), str(row[f'{self.objecttype_col}_2']))
                         ])
                         return pd.Series({
                             f'{self.gisib_id_col}_1': pair[0][0],
-                            'objecttype_1': pair[0][1],
+                            f'{self.objecttype_col}_1': pair[0][1],
                             f'{self.gisib_id_col}_2': pair[1][0],
-                            'objecttype_2': pair[1][1]
+                            f'{self.objecttype_col}_2': pair[1][1]
                         })
 
-                    overlaps[[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2']] = overlaps.apply(normalize_row,
+                    overlaps[[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2']] = overlaps.apply(normalize_row,
                                                                                                           axis=1)
                     overlaps = (
                         overlaps
                         .drop_duplicates(
-                        subset=[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2'])
-                        .loc[:,[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2', 'geometry']]
+                        subset=[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2'])
+                        .loc[:,[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2', 'geometry']]
                         .set_geometry("geometry")
                     )
                     # Keep only columns you want, with "geometry" as the actual intersection
@@ -147,7 +151,7 @@ class GisibValidator:
         Exports to a single layer if any found.
         """
         df = self.gisib
-        for required_col in [f'{self.gisib_id_col}', "objecttype", "relatieve_hoogteligging"]:
+        for required_col in [f'{self.gisib_id_col}', self.objecttype_col, self.relatieve_hoogteligging_col]:
             if required_col not in df.columns:
                 raise ValueError(f"Kolom '{required_col}' niet gevonden in GeoDataFrame.")
 
@@ -157,8 +161,8 @@ class GisibValidator:
 
         for col in [
             f"{self.gisib_id_col}_1", f"{self.gisib_id_col}_2",
-            "objecttype_1", "objecttype_2",
-            "relatieve_hoogteligging_1", "relatieve_hoogteligging_2"
+            f"{self.objecttype_col}_1", f"{self.objecttype_col}_2",
+            f"{self.relatieve_hoogteligging_col}_1", f"{self.relatieve_hoogteligging_col}_2"
         ]:
             if col not in result.columns:
                 raise ValueError(f"Kolom '{col}' niet gevonden na overlay. Controleer input-bestanden.")
@@ -178,14 +182,14 @@ class GisibValidator:
             result
             .loc[(result.overlap_1 > self.threshold) & (result.overlap_2 > self.threshold)]
             .assign(
-                relatieve_hoogteligging_2=lambda d: d["relatieve_hoogteligging_2"].fillna(d["relatieve_hoogteligging_1"]),
-                relatieve_hoogteligging_1=lambda d: d["relatieve_hoogteligging_1"].fillna(d["relatieve_hoogteligging_2"]),
+                relatieve_hoogteligging_2=lambda d: d[f"{self.relatieve_hoogteligging_col}_2"].fillna(d[f"{self.relatieve_hoogteligging_col}_1"]),
+                relatieve_hoogteligging_1=lambda d: d[f"{self.relatieve_hoogteligging_col}_1"].fillna(d[f"{self.relatieve_hoogteligging_col}_2"]),
             )
-            .fillna({"relatieve_hoogteligging_1": 0, "relatieve_hoogteligging_2": 0})
+            .fillna({f"{self.relatieve_hoogteligging_col}_1": 0, f"{self.relatieve_hoogteligging_col}_2": 0})
             .assign(objecttypes=lambda d: d.apply(
                 lambda row: "_".join(sorted([
-                    str(row["objecttype_1"]) if pd.notnull(row["objecttype_1"]) else "",
-                    str(row["objecttype_2"]) if pd.notnull(row["objecttype_2"]) else ""
+                    str(row[f"{self.objecttype_col}_1"]) if pd.notnull(row[f"{self.objecttype_col}_1"]) else "",
+                    str(row[f"{self.objecttype_col}_2"]) if pd.notnull(row[f"{self.objecttype_col}_2"]) else ""
                 ])).lower(), axis=1
             ),
                 guids=lambda d: d.apply(
@@ -200,30 +204,30 @@ class GisibValidator:
 
                 def normalize_row(row):
                     pair = sorted([
-                        (str(row[f'{self.gisib_id_col}_1']), str(row['objecttype_1'])),
-                        (str(row[f'{self.gisib_id_col}_2']), str(row['objecttype_2']))
+                        (str(row[f'{self.gisib_id_col}_1']), str(row[f'{self.objecttype_col}_1'])),
+                        (str(row[f'{self.gisib_id_col}_2']), str(row[f'{self.objecttype_col}_2']))
                     ])
                     return pd.Series({
                         f'{self.gisib_id_col}_1': pair[0][0],
-                        'objecttype_1': pair[0][1],
+                        f'{self.objecttype_col}_1': pair[0][1],
                         f'{self.gisib_id_col}_2': pair[1][0],
-                        'objecttype_2': pair[1][1]
+                        f'{self.objecttype_col}_2': pair[1][1]
                     })
 
-                overlaps[[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2']] = overlaps.apply(normalize_row,
+                overlaps[[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2']] = overlaps.apply(normalize_row,
                                                                                                 axis=1)
                 overlaps = (
                     overlaps
                     .drop_duplicates(
-                        subset=[f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2'])
-                    .loc[:, [f'{self.gisib_id_col}_1', 'objecttype_1', f'{self.gisib_id_col}_2', 'objecttype_2', 'geometry']]
+                        subset=[f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2'])
+                    .loc[:, [f'{self.gisib_id_col}_1', f'{self.objecttype_col}_1', f'{self.gisib_id_col}_2', f'{self.objecttype_col}_2', 'geometry']]
                     .set_geometry("geometry")
                 )
                 # Keep only columns you want, with "geometry" as the actual intersection
 
                 overlaps.to_file(self.gpkg_path, layer=layer, driver="GPKG")
                 print("Overlap counts between the assets:\n\n:",
-                      overlaps.loc[:,["objecttype_1","objecttype_2"]].value_counts())
+                      overlaps.loc[:,[f"{self.objecttype_col}_1",f"{self.objecttype_col}_2"]].value_counts())
         return overlaps
 
     def run_all_validations(self):
