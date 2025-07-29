@@ -42,7 +42,7 @@ class Controller:
                     gisib_hoogteligging_col=self.gisib_hoogteligging_col,
                     bgt_hoogteligging_col=self.bgt_hoogteligging_col,
                 )
-                buckets[asset_name] = matcher.run()
+                buckets[asset_name.value] = matcher.run()
         self.created_buckets = buckets
         return buckets
 
