@@ -9,6 +9,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 *.gpkg
+*.gpkg-shm
+*.gpkg-wal
 notebooks/
 data/
 build/
