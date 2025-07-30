@@ -108,7 +108,7 @@ if __name__ == "__main__":
         buckets = controller.create_buckets()
 
         if buckets:
-            controller.write_overlaps_to_geopackages(suffix=gebied.lower(),directory=date.today().isoformat() +"_" +gebied.lower())
+            controller.write_overlaps_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
     # results = controller.run()
 
     # # Run pre-validation
