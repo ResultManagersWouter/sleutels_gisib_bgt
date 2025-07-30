@@ -17,8 +17,9 @@ class ControleTabelGisib(Enum):
 
 class ObjectType(Enum):
     CONTROLE_TABEL_GISIB_OBJECT = 'Objecttype'
-    BGTOBJECTTYPE = 'Objecttype'
     CONTROLE_TABEL_BGT_OBJECT = 'BGT Objecttype'
+    BGTOBJECTTYPE = 'ObjectType'
+
 
 
 

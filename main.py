@@ -43,23 +43,24 @@ if __name__ == "__main__":
         object_col=ObjectType.BGTOBJECTTYPE.value
 
     )
-    bgt_bbox = bgt.total_bounds
+    # make it a tuple for input
+    bgt_bbox = tuple(bgt.total_bounds.tolist())
 
     # Load assets
     assets = {
-        AssetType.TERREINDEEL: read_gisib(
+        AssetType.TERREINDEEL.value: read_gisib(
             fp_gisib=os.environ.get("FP_TRD"),
             columns=ASSET_SCHEMAS[AssetType.TERREINDEEL],
             layer=AssetType.TERREINDEEL,
             bbox=bgt_bbox
         ),
-        AssetType.GROENOBJECTEN: read_gisib(
+        AssetType.GROENOBJECTEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_GRN"),
             columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN],
             layer=AssetType.GROENOBJECTEN,
             bbox=bgt_bbox
         ),
-        AssetType.VERHARDINGEN: read_gisib(
+        AssetType.VERHARDINGEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_VRH"),
             columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN],
             layer=AssetType.VERHARDINGEN,
