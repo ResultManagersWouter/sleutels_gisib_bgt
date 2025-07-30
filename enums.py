@@ -16,8 +16,9 @@ class ControleTabelGisib(Enum):
     GROENOBJECT = 'Groenobject'
 
 class ObjectType(Enum):
-    CONTROLE_TABEL = 'Objecttype'
-    BGT = 'Objecttype'
+    CONTROLE_TABEL_GISIB_OBJECT = 'Objecttype'
+    BGTOBJECTTYPE = 'Objecttype'
+    CONTROLE_TABEL_BGT_OBJECT = 'BGT Objecttype'
 
 
 

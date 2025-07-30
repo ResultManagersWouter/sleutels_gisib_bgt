@@ -1,13 +1,14 @@
 import os
 from enum import Enum
-from typing import List, Optional, Union
-import geopandas as gpd
 import pandas as pd
-import pyogrio
 from enums import AssetType
 from columns_config import column_mappings
+from typing import Optional, Union, List, Tuple
+import geopandas as gpd
+import pyogrio
 
-def _read_bgt_shapes(folder : str,columns:list[str]):
+
+def _read_bgt_shapes(folder: str, columns: list[str]):
     """
     Reads shapefiles from a given folder and returns a GeoDataFrame containing specified columns.
 
@@ -35,7 +36,10 @@ def _read_bgt_shapes(folder : str,columns:list[str]):
 
     return pd.concat(gdfs, ignore_index=True)
 
-def read_bgt_shapes(folder: str, columns: List[str], objecttypes: List[str],object_col:str) -> gpd.GeoDataFrame:
+
+def read_bgt_shapes(
+    folder: str, columns: List[str], objecttypes: List[str], object_col: str
+) -> gpd.GeoDataFrame:
     """
     Reads shapefiles from a specified folder and returns a concatenated GeoDataFrame containing only the specified columns.
 
@@ -75,8 +79,10 @@ def read_bgt_shapes(folder: str, columns: List[str], objecttypes: List[str],obje
     - Assumes uniform schema and compatible CRS across shapefiles.
     - `objecttypes` filtering is declared but not currently active in the function logic.
     """
-    gdfs = _read_bgt_shapes(folder=folder,columns=columns)
-    return gdfs.loc[lambda df: df.loc[:,object_col].isin(objecttypes)]
+    gdfs = _read_bgt_shapes(folder=folder, columns=columns)
+    return gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
+
+
 def read_bgt(fp_bgt: str, columns: List[str]) -> gpd.GeoDataFrame:
     """
     Reads a BGT dataset and returns a cleaned GeoDataFrame.
@@ -91,13 +97,14 @@ def read_bgt(fp_bgt: str, columns: List[str]) -> gpd.GeoDataFrame:
     gdf = (
         gpd.read_file(fp_bgt, columns=columns)
         .assign(geometry=lambda df: df.geometry.buffer(0))  # Clean invalid geometries
-        .loc[lambda df: df.lokaalid.notnull()]              # Keep only rows with a lokaalid
+        .loc[lambda df: df.lokaalid.notnull()]  # Keep only rows with a lokaalid
     )
-    return gdf
+    return gdf, AssetType  # adjust as needed
 def read_gisib(
     fp_gisib: str,
     layer: Optional[Union[str, AssetType]] = None,
-    columns: Optional[List[str]] = None
+    columns: Optional[List[str]] = None,
+    bbox: Optional[Tuple[float, float, float, float]] = None,
 ) -> gpd.GeoDataFrame:
     """
     Reads a GISIB dataset layer using pyogrio and returns a cleaned GeoDataFrame.
@@ -106,6 +113,8 @@ def read_gisib(
         fp_gisib (str): Path to the GISIB GPKG file.
         layer (Optional[str or AssetType]): Layer name to read. If None, reads the first layer.
         columns (Optional[List[str]]): List of columns to load. If None, all columns are loaded.
+        bbox (Optional[Tuple[float, float, float, float]]): Optional bounding box (minx, miny, maxx, maxy)
+            to spatially filter the dataset.
 
     Returns:
         gpd.GeoDataFrame: Cleaned GISIB data with fixed geometries.
@@ -119,7 +128,9 @@ def read_gisib(
         layer_name = layer
 
     # Check casing of first column to determine column mode
-    first_column = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", rows=1).columns[0]
+    first_column = gpd.read_file(
+        fp_gisib, layer=layer_name, engine="pyogrio", rows=1
+    ).columns[0]
 
     # Case 1: uppercase → map to lowercase before reading
     if first_column == "ID":
@@ -129,18 +140,26 @@ def read_gisib(
             mapped_columns = [reverse_mapper.get(col, col) for col in columns]
         else:
             mapped_columns = None
-        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns)
+        gdf = gpd.read_file(
+            fp_gisib,
+            layer=layer_name,
+            engine="pyogrio",
+            columns=mapped_columns,
+            bbox=bbox,
+        )
         gdf = gdf.rename(columns=mapper)
 
     # Case 2: lowercase → read and map after reading
     else:
-        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns)
+        gdf = gpd.read_file(
+            fp_gisib, layer=layer_name, engine="pyogrio", columns=columns, bbox=bbox
+        )
         gdf = gdf.rename(columns=column_mappings.get(layer, {}))
 
     return gdf.assign(geometry=lambda df: df.geometry.buffer(0))
-
-
-def read_controle_tabel(filepath: str, columns: List[str], filterEnum: Enum, filter_col: str) -> pd.DataFrame:
+def read_controle_tabel(
+    filepath: str, columns: List[str], filterEnum: Enum, filter_col: str
+) -> pd.DataFrame:
     """
     Reads and filters an Excel control table based on a specific column and Enum filter.
 
@@ -173,5 +192,7 @@ def read_controle_tabel(filepath: str, columns: List[str], filterEnum: Enum, fil
     >>> read_controle_tabel('data.xlsx', ['id', 'status'], Status, 'status')
     """
     enum_values = [e.value for e in filterEnum]
-    df = pd.read_excel(filepath).loc[lambda df: df[filter_col].isin(enum_values), columns]
+    df = pd.read_excel(filepath).loc[
+        lambda df: df[filter_col].isin(enum_values), columns
+    ]
     return df

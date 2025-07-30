@@ -1,5 +1,5 @@
 # schema_config.py
-
+from enums import AssetType
 # Define BGT columns once
 BGT_COLUMNS_MERGED = [
     "type",
@@ -35,9 +35,6 @@ CONTROLE_TABEL_COLUMNS = [
     "BGT Functie (geonovum)",
     "IMGeo Functie plus (geonovum)",
 ]
-
-
-from enums import AssetType
 
 # Define per-asset GISIB columns only
 ASSET_SCHEMAS = {
