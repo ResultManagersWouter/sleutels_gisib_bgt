@@ -5,7 +5,10 @@ from enums import AssetType
 from columns_config import column_mappings
 from typing import Optional, Union, List, Tuple
 import geopandas as gpd
-import pyogrio
+import logging
+import fiona
+
+logger = logging.getLogger(__name__)
 
 
 def _read_bgt_shapes(folder: str, columns: list[str]):
@@ -31,7 +34,7 @@ def _read_bgt_shapes(folder: str, columns: list[str]):
 
     for shp in shapefiles:
         path = os.path.join(folder, shp)
-        gdf = gpd.read_file(path).rename(columns={"FysiekVplu":"FysiekVPlu"})
+        gdf = gpd.read_file(path).rename(columns={"FysiekVplu": "FysiekVPlu"})
         gdfs.append(gdf[columns])
 
     return pd.concat(gdfs, ignore_index=True)
@@ -100,6 +103,8 @@ def read_bgt(fp_bgt: str, columns: List[str]) -> gpd.GeoDataFrame:
         .loc[lambda df: df.lokaalid.notnull()]  # Keep only rows with a lokaalid
     )
     return gdf, AssetType  # adjust as needed
+
+
 def read_gisib(
     fp_gisib: str,
     layer: Optional[Union[str, AssetType]] = None,
@@ -121,9 +126,17 @@ def read_gisib(
     """
     # Determine layer name
     if layer is None:
-        layer_name = pyogrio.list_layers(fp_gisib)[0]
+        layer_name = fiona.listlayers(fp_gisib)[0]
     elif isinstance(layer, AssetType):
-        layer_name = layer.value
+        available_layers = fiona.listlayers(fp_gisib)
+        if layer.value in available_layers:
+            layer_name = layer.value
+        else:
+            layer_name = available_layers[0]
+            logging.info(
+                f"Layer name is different than input:\n Given = {layer}\n Layer = {available_layers[0]}"
+            )
+
     else:
         layer_name = layer
 
@@ -131,15 +144,23 @@ def read_gisib(
     first_column = gpd.read_file(
         fp_gisib, layer=layer_name, engine="pyogrio", rows=1
     ).columns[0]
+    mapper = column_mappings.get(layer, {})
 
     # Case 1: uppercase → map to lowercase before reading
-    if first_column == "ID":
-        mapper = column_mappings.get(layer, {})
-        reverse_mapper = {v: k for k, v in mapper.items()}  # UPPER → lower
-        if columns:
-            mapped_columns = [reverse_mapper.get(col, col) for col in columns]
-        else:
-            mapped_columns = None
+    if first_column == "id":
+        mapper = column_mappings.get(layer, {})  # lower → UPPER
+        gdf = gpd.read_file(
+            fp_gisib,
+            layer=layer_name,
+            engine="pyogrio",
+            columns=columns,
+            bbox=bbox,
+        )
+        gdf = gdf.rename(columns=mapper)
+
+    # Case 2: lowercase → read and map after reading
+    elif first_column == "ID":
+        mapped_columns = [mapper.get(col) for col in columns]
         gdf = gpd.read_file(
             fp_gisib,
             layer=layer_name,
@@ -147,16 +168,10 @@ def read_gisib(
             columns=mapped_columns,
             bbox=bbox,
         )
-        gdf = gdf.rename(columns=mapper)
-
-    # Case 2: lowercase → read and map after reading
-    else:
-        gdf = gpd.read_file(
-            fp_gisib, layer=layer_name, engine="pyogrio", columns=columns, bbox=bbox
-        )
-        gdf = gdf.rename(columns=column_mappings.get(layer, {}))
-
+        # print(gdf.head())
     return gdf.assign(geometry=lambda df: df.geometry.buffer(0))
+
+
 def read_controle_tabel(
     filepath: str, columns: List[str], filterEnum: Enum, filter_col: str
 ) -> pd.DataFrame:

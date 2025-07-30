@@ -108,6 +108,8 @@ column_mappings = {
         "op_talud": "OP_TALUD",
         "opleverdatum": "OPLEVERDATUM",
         "percentage_loofbos": "PERCENTAGE_LOOFBOS",
+        "object_begintijd": "VALID_FROM",
+        "object_eindtijd": "VALID_TILL",
         "risicotoeslag": "RISICOTOESLAG",
         "relatieve_hoogteligging": "RELATIEVE_HOOGTELIGGING",
         "gbd_stadsdeel_naam": "STADSDEEL_OF_KERN",
@@ -122,6 +124,7 @@ column_mappings = {
         "verwijderdatum": "VERWIJDERDATUM",
         "gbd_wijk_naam": "WIJK",
         "bag_woonplaats_naam": "WOONPLAATS",
+"geometry":"geometry",
     },
     AssetType.GROENOBJECTEN: {
         "id": "ID",
@@ -185,6 +188,7 @@ column_mappings = {
         "object_begintijd": "VALID_FROM",
         "object_eindtijd": "VALID_TILL",
         "verwijderdatum": "VERWIJDERDATUM",
+        "geometry":"geometry"
     },
     AssetType.VERHARDINGEN: {
         "id": "ID",
@@ -237,5 +241,6 @@ column_mappings = {
         "type_rijstrook": "TYPE_RIJSTROOK",
         "waterdoorlatendheid": "WATERDOORLATENDHEID",
         "wegtype_bestaand": "WEGTYPE_BESTAAND",
+"geometry":"geometry"
     },
 }

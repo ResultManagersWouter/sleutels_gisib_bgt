@@ -21,11 +21,13 @@ gisib_id_col = "GUID"
 bgt_id_col = "lokaalid"
 gisib_hoogteligging_col = "RELATIEVE_HOOGTELIGGING"
 gisib_objecttype_col = "OBJECTTYPE"
+today = date.today().isoformat()
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
     # controle tabel
+    level = Gebied.BUURT.value
     controle_tabel = read_controle_tabel(
         filepath=os.environ.get("FP_CONTROLE_TABEL"),
         columns=CONTROLE_TABEL_COLUMNS,
@@ -68,22 +70,20 @@ if __name__ == "__main__":
         ),
     }
 
-    # level = Gebied.BUURT.value
-    # area = "all"
     #
     # filtered_assets = {
     #     key: df[df[level] == area].copy()
     #     for key, df in assets.items()
     # }
     # check if there is overlap in gisib
-    # validator = GisibValidator(
-    #     assets=assets,
-    #     gisib_id_col=gisib_id_col,
-    #     relatieve_hoogteligging_col=gisib_hoogteligging_col,
-    #     objecttype_col=gisib_objecttype_col,
-    #     gpkg_path=f"overlaps_{area.lower()}.gpkg",
-    # )
-    # valid = validator.run_all_validations()
+    validator = GisibValidator(
+        assets=assets,
+        gisib_id_col=gisib_id_col,
+        relatieve_hoogteligging_col=gisib_hoogteligging_col,
+        objecttype_col=gisib_objecttype_col,
+        gpkg_path=f"{today}_overlaps_{level.lower()}.gpkg",
+    )
+    valid = validator.run_all_validations()
     # # if there is no overlap, continue
     # if valid.empty:
     #     controller = Controller(
