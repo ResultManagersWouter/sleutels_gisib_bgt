@@ -5,13 +5,14 @@ from enums import AssetType
 from columns_config import column_mappings
 from typing import Optional, Union, List, Tuple
 import geopandas as gpd
+from shapely import Polygon
 import logging
 import fiona
 
 logger = logging.getLogger(__name__)
 
 
-def _read_bgt_shapes(folder: str, columns: list[str]):
+def _read_bgt_shapes(folder: str, columns: list[str],bbox):
     """
     Reads shapefiles from a given folder and returns a GeoDataFrame containing specified columns.
 
@@ -34,14 +35,14 @@ def _read_bgt_shapes(folder: str, columns: list[str]):
 
     for shp in shapefiles:
         path = os.path.join(folder, shp)
-        gdf = gpd.read_file(path).rename(columns={"FysiekVplu": "FysiekVPlu"})
+        gdf = gpd.read_file(path,bbox=bbox).rename(columns={"FysiekVplu": "FysiekVPlu"})
         gdfs.append(gdf[columns])
 
     return pd.concat(gdfs, ignore_index=True)
 
 
 def read_bgt_shapes(
-    folder: str, columns: List[str], objecttypes: List[str], object_col: str
+    folder: str, columns: List[str], objecttypes: List[str], object_col: str,bbox
 ) -> gpd.GeoDataFrame:
     """
     Reads shapefiles from a specified folder and returns a concatenated GeoDataFrame containing only the specified columns.
@@ -82,7 +83,9 @@ def read_bgt_shapes(
     - Assumes uniform schema and compatible CRS across shapefiles.
     - `objecttypes` filtering is declared but not currently active in the function logic.
     """
-    gdfs = _read_bgt_shapes(folder=folder, columns=columns)
+    gdfs = _read_bgt_shapes(folder=folder, columns=columns,bbox=bbox).loc[lambda df: df.geometry.type == "Polygon"]
+    # Set CRS to EPSG:28992
+    gdfs = gdfs.set_crs(28992, allow_override=True)
     return gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
 
 
@@ -104,12 +107,20 @@ def read_bgt(fp_bgt: str, columns: List[str]) -> gpd.GeoDataFrame:
     )
     return gdf, AssetType  # adjust as needed
 
+import geopandas as gpd
+import fiona
+import logging
+import numpy as np
+from typing import Optional, Union, List, Tuple
+from shapely.geometry import Polygon
 
 def read_gisib(
     fp_gisib: str,
-    layer: Optional[Union[str, AssetType]] = None,
+    layer: Optional[Union[str, 'AssetType']] = None,
     columns: Optional[List[str]] = None,
-    bbox: Optional[Tuple[float, float, float, float]] = None,
+    bbox: Optional[Union[Tuple[float, float, float, float], Polygon]] = None,
+    filter_column: Optional[str] = None,
+    filter_value: Optional[Union[str, float, int]] = None,
 ) -> gpd.GeoDataFrame:
     """
     Reads a GISIB dataset layer using pyogrio and returns a cleaned GeoDataFrame.
@@ -118,11 +129,13 @@ def read_gisib(
         fp_gisib (str): Path to the GISIB GPKG file.
         layer (Optional[str or AssetType]): Layer name to read. If None, reads the first layer.
         columns (Optional[List[str]]): List of columns to load. If None, all columns are loaded.
-        bbox (Optional[Tuple[float, float, float, float]]): Optional bounding box (minx, miny, maxx, maxy)
-            to spatially filter the dataset.
+        bbox (Optional[Tuple[float, float, float, float]] or Polygon): Spatial filter.
+        filter_column (Optional[str]): Name of the column to filter on.
+        filter_value (Optional[Union[str, float, int]]): Value to filter on.
+            Rows where the column == value OR is null will be retained.
 
     Returns:
-        gpd.GeoDataFrame: Cleaned GISIB data with fixed geometries.
+        gpd.GeoDataFrame: Cleaned GISIB data with fixed geometries and EPSG:28992.
     """
     # Determine layer name
     if layer is None:
@@ -136,39 +149,37 @@ def read_gisib(
             logging.info(
                 f"Layer name is different than input:\n Given = {layer}\n Layer = {available_layers[0]}"
             )
-
     else:
         layer_name = layer
 
-    # Check casing of first column to determine column mode
-    first_column = gpd.read_file(
-        fp_gisib, layer=layer_name, engine="pyogrio", rows=1
-    ).columns[0]
+    # Convert Polygon to bounding box for fast read
+    filter_polygon = None
+    if isinstance(bbox, Polygon):
+        filter_polygon = bbox
+        bbox = bbox.bounds
+
+    # Determine casing and mapping
+    first_column = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", rows=1).columns[0]
     mapper = column_mappings.get(layer, {})
 
-    # Case 1: uppercase → map to lowercase before reading
     if first_column == "id":
-        mapper = column_mappings.get(layer, {})  # lower → UPPER
-        gdf = gpd.read_file(
-            fp_gisib,
-            layer=layer_name,
-            engine="pyogrio",
-            columns=columns,
-            bbox=bbox,
-        )
+        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns, bbox=bbox)
         gdf = gdf.rename(columns=mapper)
-
-    # Case 2: lowercase → read and map after reading
     elif first_column == "ID":
-        mapped_columns = [mapper.get(col) for col in columns]
-        gdf = gpd.read_file(
-            fp_gisib,
-            layer=layer_name,
-            engine="pyogrio",
-            columns=mapped_columns,
-            bbox=bbox,
-        )
-        # print(gdf.head())
+        mapped_columns = [mapper.get(col) for col in columns] if columns else None
+        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns, bbox=bbox)
+
+    # Geometry filter
+    if filter_polygon is not None:
+        gdf = gdf[gdf.geometry.intersects(filter_polygon)]
+
+    # Column filter: keep rows where column == value OR is null
+    if filter_column is not None and filter_value is not None:
+        gdf = gdf[(gdf[filter_column] == filter_value) | (gdf[filter_column].isna())]
+
+    # Set CRS to EPSG:28992
+    gdf = gdf.set_crs(28992, allow_override=True)
+
     return gdf.assign(geometry=lambda df: df.geometry.buffer(0))
 
 
@@ -211,3 +222,32 @@ def read_controle_tabel(
         lambda df: df[filter_col].isin(enum_values), columns
     ]
     return df
+
+def read_gebied(filepath: str, gebied: str) -> Tuple[float, float, float, float]:
+    """
+    Reads a GeoDataFrame from the specified file and extracts the bounding box
+    for features that match the given 'gebied' value.
+
+    Args:
+        filepath (str): Path to the file to read (e.g., a GeoPackage or shapefile).
+        gebied (str): The value to match in the 'gebied' column for filtering.
+
+    Returns:
+        Tuple[float, float, float, float]: Bounding box (minx, miny, maxx, maxy) of the selected features.
+
+    Raises:
+        ValueError: If no features match the specified gebied.
+    """
+    gdf = gpd.read_file(filepath)
+
+    if gebied not in gdf.naam.to_list():
+        raise ValueError("'gebied' column not found in the file.")
+
+    selection = gdf[gdf["naam"] == gebied]
+
+    if selection.empty:
+        logging.info(gdf.naam.unique())
+        raise ValueError(f"No features found with naam = '{gebied}'")
+
+
+    return selection.geometry.unary_union

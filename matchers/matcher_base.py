@@ -203,11 +203,11 @@ class MatcherBase:
                 overlap_gisib=("overlap_gisib", "mean"),
                 guid_list=(self.gisib_id_col, list),
                 guid_count=(self.gisib_id_col, "count"),
-                onderhoudsplichtige=("onderhoudsplichtige", lambda x: x.nunique(dropna=False)),
-                type_object=("type_object", lambda x: x.nunique(dropna=False)),
-                type_object_plus=("type_object_plus", lambda x: x.nunique(dropna=False)),
-                type_beheerder_plus=("type_beheerder_plus", lambda x: x.nunique(dropna=False)),
-                gbd_buurt_naam=("gbd_buurt_naam", "first"),
+                ONDERHOUDSPLICHTIGE=("ONDERHOUDSPLICHTIGE", lambda x: x.nunique(dropna=False)),
+                TYPE=("TYPE", lambda x: x.nunique(dropna=False)),
+                TYPE_GEDETAILLEERD=("TYPE_GEDETAILLEERD", lambda x: x.nunique(dropna=False)),
+                BEHEERDER_GEDETAILLEERD=("BEHEERDER_GEDETAILLEERD", lambda x: x.nunique(dropna=False)),
+                BUURT=("BUURT", "first"),
             ).reset_index()
         )
         gdf = gpd.GeoDataFrame(agg, geometry="geometry_gisib", crs=intersection_df.crs)
@@ -264,9 +264,9 @@ class MatcherBase:
             (bgt_gisib["guid_count"] > 1)
             & bgt_gisib["overlap_bgt5"]
             & bgt_gisib["overlap_gisib5"]
-            & (bgt_gisib["onderhoudsplichtige"] == 1)
-            & (bgt_gisib["type_object_plus"] == 1)
-            & (bgt_gisib["type_beheerder_plus"] < 2)
+            & (bgt_gisib["ONDERHOUDSPLICHTIGE"] == 1)
+            & (bgt_gisib["TYPE_GEDETAILLEERD"] == 1)
+            & (bgt_gisib["BEHEERDER_GEDETAILLEERD"] < 2)
         )
         return set(bgt_gisib.loc[mask, "guid_list"].explode())
 

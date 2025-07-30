@@ -33,9 +33,11 @@ class Controller:
     def create_buckets(self):
         buckets = {}
         for asset_name, matcher_class in ASSET_MATCHER_CLASSES.items():
-            if asset_name in self.assets:
+
+            if asset_name.value in self.assets:
+                print(asset_name.value)
                 matcher = matcher_class(
-                    gisib_gdf=self.assets[asset_name],
+                    gisib_gdf=self.assets[asset_name.value],
                     bgt_gdf=self.bgt,
                     gisib_id_col=self.gisib_id_col,
                     bgt_id_col=self.bgt_id_col,
@@ -64,13 +66,17 @@ class Controller:
             layers_written = 0
 
             for bucket_name, bucket_gdf in buckets.items():
+                print(asset_name,bucket_name,bucket_gdf.shape)
                 if bucket_gdf.empty:
                     continue
 
-                # Filter BGT features
-                bgt_ids = bucket_gdf[self.bgt_id_col].dropna().unique()
-                bgt_layer = self.bgt[self.bgt[self.bgt_id_col].isin(bgt_ids)]
-                if not bgt_layer.empty:
+                try:
+                    bgt_ids = bucket_gdf[self.bgt_id_col].dropna().unique()
+                    bgt_layer = self.bgt[self.bgt[self.bgt_id_col].isin(bgt_ids)]
+                except KeyError:
+                    logging.warning("Remaining bucket has no lokaalid")
+                    bgt_layer = None  # or set to None if preferred
+                if bgt_layer is not None and not bgt_layer.empty:
                     bgt_layer.to_file(filename, layer=f"bgt - {bucket_name}", driver="GPKG")
                     layers_written += 1
 

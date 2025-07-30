@@ -48,6 +48,7 @@ ASSET_SCHEMAS = {
         "type_object_plus",
         "onderhoudsplichtige",
         "gbd_buurt_naam",
+        "gbd_stadsdeel_naam",
         "type_beheerder_plus",
     ],
     AssetType.GROENOBJECTEN: [
@@ -60,6 +61,7 @@ ASSET_SCHEMAS = {
         "type_object_plus",
         "onderhoudsplichtige",
         "gbd_buurt_naam",
+        "gbd_stadsdeel_naam",
         "type_beheerder_plus",
     ],
     AssetType.VERHARDINGEN: [
@@ -72,6 +74,7 @@ ASSET_SCHEMAS = {
         "type_plus",
         "onderhoudsplichtige",
         "gbd_buurt_naam",
+        "gbd_stadsdeel_naam",
         "type_beheerder_plus",
     ],
 }

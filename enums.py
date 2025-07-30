@@ -6,9 +6,9 @@ class AssetType(Enum):
     VERHARDINGEN = "verhardingen"
 
 class Gebied(Enum):
-    BUURT = "gbd_buurt_naam"
-    WIJK = "gbd_wijk_naam"
-    STADSDEEL = "gbd_stadsdeel_naam"
+    BUURT = "BUURT"
+    WIJK = "WIJK"
+    STADSDEEL = "STADSDEEL_OF_KERN"
 
 class ControleTabelGisib(Enum):
     VERHARDINGSOBJECT = 'Verhardingsobject'
