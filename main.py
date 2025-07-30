@@ -1,7 +1,7 @@
 # This is a sample Python script.
 import os
 import logging
-from .dataloaders import read_gisib, read_bgt_shapes, read_controle_tabel
+from dataloaders import read_gisib, read_bgt_shapes, read_controle_tabel
 from dotenv import load_dotenv
 from gisib_validator import GisibValidator
 from enums import AssetType, Gebied, ControleTabelGisib, ObjectType

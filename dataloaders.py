@@ -31,9 +31,8 @@ def _read_bgt_shapes(folder: str, columns: list[str]):
 
     for shp in shapefiles:
         path = os.path.join(folder, shp)
-        gdf = gpd.read_file(path)
+        gdf = gpd.read_file(path).rename(columns={"FysiekVplu":"FysiekVPlu"})
         gdfs.append(gdf[columns])
-
     return pd.concat(gdfs, ignore_index=True)
 
 
