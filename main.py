@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from gisib_validator import GisibValidator
 from enums import AssetType, Gebied, ControleTabelGisib, ObjectType
 from matchers import GroenobjectenMatcher, TerreindelenMatcher, VerhardingenMatcher
-from columns_config import BGT_COLUMNS, ASSET_SCHEMAS
+from columns_config import BGT_SHAPE_COLUMNS,, ASSET_SCHEMAS
 from controller import Controller
 from datetime import date
 

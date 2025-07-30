@@ -15,8 +15,19 @@ BGT_COLUMNS_MERGED = [
     "geometry",
     "fp",
 ]
-
 BGT_SHAPE_COLUMNS = [
+    "ObjectType",
+    "FysiekVoor",
+    "FysiekVPlu",
+    "Functie",
+    "FunctieExt",
+    "Nivo",
+    "LokaalID",
+    "Bronhouder",
+    "geometry",
+]
+
+CONTROLE_TABEL_COLUMNS = [
     "Objecttype",
     "BGT Objecttype",
     "BGT Fysiek voorkomen (geonovum)",
