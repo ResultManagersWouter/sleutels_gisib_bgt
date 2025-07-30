@@ -1,10 +1,10 @@
 # This is a sample Python script.
 import os
 import logging
-from utils import read_gisib,read_bgt
+from dataloaders import read_gisib,read_bgt,read_bgt_shapes,read_controle_tabel
 from dotenv import load_dotenv
 from gisib_validator import GisibValidator
-from asset_config import AssetType, Gebied
+from enums import AssetType, Gebied,ControleTabelGisib,ObjectType
 from matchers import GroenobjectenMatcher,TerreindelenMatcher,VerhardingenMatcher
 from columns_config import BGT_COLUMNS,ASSET_SCHEMAS
 from controller import Controller
@@ -25,6 +25,12 @@ gisib_objecttype_col = "OBJECTTYPE"
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    # controle tabel
+    controle_tabel = read_controle_tabel(filepath=os.environ.get("FP_CONTROLE_TABEL"),
+                                         columns = ...,
+                                         filterEnum=ControleTabelGisib,
+                                         filter_col=ObjectType.CONTROLE_TABEL.value)
+
     # Load assets
     assets = {
         AssetType.TERREINDEEL: read_gisib(fp_gisib=os.environ.get('FP_TRD'),
@@ -38,8 +44,10 @@ if __name__ == '__main__':
                                            layer=AssetType.VERHARDINGEN),
     }
 
-    bgt = read_bgt(fp_bgt=os.environ.get('FP_BGT'),columns=BGT_COLUMNS)
-
+    # based on the controletabel
+    objecttypes = ...
+    # bgt = read_bgt(fp_bgt=os.environ.get('FP_BGT'),columns=BGT_COLUMNS)
+    bgt = read_bgt_shapes(os.environ.get("FP_BGT_FOLDER"),)
     level = Gebied.BUURT.value
     area = "all"
     #

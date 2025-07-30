@@ -1,6 +1,6 @@
 from buckets import BucketsBase, BucketsVRH
 import logging
-from asset_config import AssetType
+from enums import AssetType
 
 logger = logging.getLogger(__name__)
 

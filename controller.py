@@ -1,4 +1,4 @@
-from asset_config import AssetType
+from enums import AssetType
 from matchers import VerhardingenMatcher,GroenobjectenMatcher,TerreindelenMatcher
 from geopandas import GeoDataFrame
 from bucket_processor import BucketProcessor,ASSET_BUCKET_ENUM

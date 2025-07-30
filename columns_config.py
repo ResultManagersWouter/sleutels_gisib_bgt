@@ -1,7 +1,7 @@
 # schema_config.py
 
 # Define BGT columns once
-BGT_COLUMNS = [
+BGT_COLUMNS_MERGED = [
     "type",
     "bgttype",
     "begintijd",
@@ -16,7 +16,15 @@ BGT_COLUMNS = [
     "fp",
 ]
 
-from asset_config import AssetType
+BGT_SHAPE_COLUMNS = ["Objecttype","BGT Objecttype",
+ "BGT Fysiek voorkomen (geonovum)",
+ "IMGeo Fysiek voorkomen plus (geonovum)",
+"BGT Functie (geonovum)","IMGeo Functie plus (geonovum)",
+
+]
+
+
+from enums import AssetType
 
 # Define per-asset GISIB columns only
 ASSET_SCHEMAS = {
