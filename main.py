@@ -96,7 +96,6 @@ if __name__ == "__main__":
     valid = validator.run_all_validations()
     # # if there is no overlap, continue
     if valid.empty:
-        print("yes")
         controller = Controller(
             assets=assets,
             bgt=bgt,
@@ -107,8 +106,8 @@ if __name__ == "__main__":
         )
         buckets = controller.create_buckets()
 
-        # if buckets:
-        #     controller.write_overlaps_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
+        if buckets:
+            controller.write_overlaps_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
     # results = controller.run()
 
     # # Run pre-validation
