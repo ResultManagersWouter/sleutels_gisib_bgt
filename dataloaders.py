@@ -3,7 +3,6 @@ from enum import Enum
 import pandas as pd
 from enums import AssetType
 from columns_config import column_mappings
-from dataloaders import read_gisib
 from columns_config import ASSET_SCHEMAS
 import geopandas as gpd
 import fiona
@@ -161,7 +160,7 @@ def read_gisib(
 
 
 def read_controle_tabel(
-    filepath: str, columns: List[str], filterEnum: Enum, filter_col: str
+    filepath: str, columns: List[str], filterEnum: Enum, filter_col: str,mapping : dict,
 ) -> pd.DataFrame:
     """
     Reads and filters an Excel control table based on a specific column and Enum filter.
@@ -197,7 +196,7 @@ def read_controle_tabel(
     enum_values = [e.value for e in filterEnum]
     df = pd.read_excel(filepath).loc[
         lambda df: df[filter_col].isin(enum_values), columns
-    ]
+    ].rename(columns=mapping)
     return df
 
 def read_gebied(filepath: str, gebied: str) -> Tuple[float, float, float, float]:

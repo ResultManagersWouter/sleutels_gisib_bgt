@@ -1,6 +1,16 @@
 # schema_config.py
 from enums import AssetType
 # Define BGT columns once
+# from the controle tabel to BGT
+column_mapping_bgt_controle_tabel = {
+    'BGT Objecttype': 'ObjectType',  # corrected!
+    'Objecttype': 'OBJECTTYPE',
+    'BGT Fysiek voorkomen (geonovum)': 'FysiekVoor',
+    'IMGeo Fysiek voorkomen plus (geonovum)': 'FysiekVPlu',
+    'BGT Functie (geonovum)': 'Functie',
+    'IMGeo Functie plus (geonovum)': 'FunctieExt',
+}
+
 BGT_COLUMNS_MERGED = [
     "type",
     "bgttype",

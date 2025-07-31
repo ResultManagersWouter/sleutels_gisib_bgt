@@ -6,8 +6,9 @@ from dotenv import load_dotenv
 from gisib_validator import GisibValidator
 from enums import ControleTabelGisib, ObjectType
 import global_vars
-from columns_config import BGT_SHAPE_COLUMNS, ASSET_SCHEMAS, CONTROLE_TABEL_COLUMNS
+from columns_config import BGT_SHAPE_COLUMNS, column_mapping_bgt_controle_tabel, CONTROLE_TABEL_COLUMNS
 from controller import Controller
+from controller_utils import should_process_buckets
 from buckets import ALL_AUTOMATIC_BUCKETS
 
 logger = logging.getLogger(__name__)
@@ -27,6 +28,7 @@ if __name__ == "__main__":
         columns=CONTROLE_TABEL_COLUMNS,
         filterEnum=ControleTabelGisib,
         filter_col=ObjectType.CONTROLE_TABEL_GISIB_OBJECT.value,
+        mapping=column_mapping_bgt_controle_tabel
     )
 
     # based on the controletabel the bgt types, we are going to filter on the shape file
@@ -45,10 +47,8 @@ if __name__ == "__main__":
     )
     # Load assets
     assets = assets = load_assets(
-    bbox=bbox,
-    gebied_col=global_vars.gebied_col,
-    gebied=global_vars.gebied
-)
+        bbox=bbox, gebied_col=global_vars.gebied_col, gebied=global_vars.gebied
+    )
 
     validator = GisibValidator(
         assets=assets,
@@ -69,15 +69,26 @@ if __name__ == "__main__":
             bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col,
         )
         automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
-        buckets = controller.manual_buckets(automatic_bucket_values=automatic_buckets)
+        buckets_to_process = controller.filtered_buckets(
+            bucket_type="manual",
+            automatic_bucket_values=automatic_buckets
+        )
+        process_required = should_process_buckets(
+            buckets_to_process,
+            type_col=global_vars.TYPE_COL_GISIB,
+            skip_types=global_vars.SKIP_TYPES,
+        )
 
-        # if buckets:
-        #     automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
-            # controller.write_buckets_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
-            # manual_buckets = controller.()
-            # controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),
-            #                                                directory="./output/"+date.today().isoformat() +"_" +gebied.lower(),
-            #                                                automatic_bucket_values=automatic_buckets)
+        # if not process_required:
+        auto_buckets = controller.filtered_buckets(
+                bucket_type="automatic",
+                automatic_bucket_values=automatic_buckets
+            )
+        # controller.write_buckets_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
+        # manual_buckets = controller.()
+        # controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),
+        #                                                directory="./output/"+date.today().isoformat() +"_" +gebied.lower(),
+        #                                                automatic_bucket_values=automatic_buckets)
     # results = controller.run()
 
     # # Run pre-validation
