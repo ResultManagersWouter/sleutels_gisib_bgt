@@ -9,8 +9,8 @@ BASE_BUCKETS = [
     # gisib and BGT have a 1:1 relationship without other intersections with overlap above the set threshhold
     ("BUCKET1", "geom_1_to_1"),
     # merge gisib objects back to the geometry of BGT because of same attributes for the gisib objects
-    ("BUCKET2", "bgt_split"),
-    ("BUCKET3", "gisib_merge"),
+    ("BUCKET2", "gisib_merge"),
+    ("BUCKET3", "bgt_split"),
     # 1 gisib N BGT - N:1, split the BGT objects
     ("BUCKET4", "gisib_split"),
     # after these matches, a check is done to see if a gisib object has a main match with a BGT object above 75% both sides
@@ -36,7 +36,7 @@ BucketsVRH = create_enum("BucketsVRH", VRH_BUCKETS)
 
 AUTOMATIC_BUCKETS = [
     BucketsBase.BUCKET1,
-    BucketsBase.BUCKET3,
+    BucketsBase.BUCKET2,
     BucketsBase.BUCKET4,
     BucketsBase.BUCKET5,
 ]

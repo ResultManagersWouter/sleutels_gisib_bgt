@@ -90,6 +90,24 @@ class Controller:
 
 
             print(f"Written {layers_written} layers to {filename} for {asset_name}.")
+    def manual_buckets(self,automatic_bucket_values: list[str] = None):
+        # Filter results to only contain manual buckets
+        if not self.created_buckets:
+            results = self.create_buckets()
+        else:
+            results = self.created_buckets
+        manual_results = {}
+
+        for asset_name, buckets in results.items():
+            manual_buckets = {
+                bucket_name: gdf
+                for bucket_name, gdf in buckets.items()
+                if bucket_name not in automatic_bucket_values and not gdf.empty
+            }
+            if manual_buckets:
+                logger.info(asset_name,manual_buckets.keys())
+                manual_results[asset_name] = manual_buckets
+        return manual_results
 
     def write_manual_buckets_to_geopackages(
             self,
@@ -112,8 +130,6 @@ class Controller:
             results = self.created_buckets
 
         os.makedirs(directory, exist_ok=True)
-        print()
-        print(automatic_bucket_values)
 
         if automatic_bucket_values is None:
             raise ValueError("You must provide the list of automatic bucket values.")

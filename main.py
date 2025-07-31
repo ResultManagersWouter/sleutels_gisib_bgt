@@ -1,15 +1,14 @@
 # This is a sample Python script.
 import os
 import logging
-from dataloaders import read_gisib, read_bgt_shapes, read_controle_tabel, read_gebied
+from dataloaders import load_assets, read_bgt_shapes, read_controle_tabel, read_gebied
 from dotenv import load_dotenv
 from gisib_validator import GisibValidator
-from enums import AssetType, Gebied, ControleTabelGisib, ObjectType
-from matchers import GroenobjectenMatcher, TerreindelenMatcher, VerhardingenMatcher
+from enums import ControleTabelGisib, ObjectType
+import global_vars
 from columns_config import BGT_SHAPE_COLUMNS, ASSET_SCHEMAS, CONTROLE_TABEL_COLUMNS
 from controller import Controller
-from datetime import date
-from buckets import ALL_AUTOMATIC_BUCKETS,AUTOMATIC_BUCKETS
+from buckets import ALL_AUTOMATIC_BUCKETS
 
 logger = logging.getLogger(__name__)
 
@@ -17,19 +16,11 @@ load_dotenv()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
 )
-gebied = 'Holendrecht-Oost'
-gebied_col = Gebied.BUURT.value
-gisib_id_col = "GUID"
-bgt_id_col = "LokaalID"
-gisib_hoogteligging_col = "RELATIEVE_HOOGTELIGGING"
-bgt_hoogteligging_col = "Nivo"
-gisib_objecttype_col = "OBJECTTYPE"
-today = date.today().isoformat()
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
-    bbox = read_gebied(os.environ.get("FP_GEBIEDEN"), gebied=gebied)
+    bbox = read_gebied(os.environ.get("FP_GEBIEDEN"), gebied=global_vars.gebied)
     # controle tabel
     controle_tabel = read_controle_tabel(
         filepath=os.environ.get("FP_CONTROLE_TABEL"),
@@ -53,45 +44,18 @@ if __name__ == "__main__":
         bbox=bbox,
     )
     # Load assets
-    assets = {
-        AssetType.TERREINDEEL.value: read_gisib(
-            fp_gisib=os.environ.get("FP_TRD"),
-            columns=ASSET_SCHEMAS[AssetType.TERREINDEEL],
-            layer=AssetType.TERREINDEEL,
-            bbox=bbox,
-            filter_column=gebied_col,
-            filter_value=gebied,
-        ),
-        AssetType.GROENOBJECTEN.value: read_gisib(
-            fp_gisib=os.environ.get("FP_GRN"),
-            columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN],
-            layer=AssetType.GROENOBJECTEN,
-            bbox=bbox,
-            filter_column=gebied_col,
-            filter_value=gebied,
-        ),
-        AssetType.VERHARDINGEN.value: read_gisib(
-            fp_gisib=os.environ.get("FP_VRH"),
-            columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN],
-            layer=AssetType.VERHARDINGEN,
-            bbox=bbox,
-            filter_column=gebied_col,
-            filter_value=gebied,
-        ),
-    }
+    assets = assets = load_assets(
+    bbox=bbox,
+    gebied_col=global_vars.gebied_col,
+    gebied=global_vars.gebied
+)
 
-    #
-    # filtered_assets = {
-    #     key: df[df[level] == area].copy()
-    #     for key, df in assets.items()
-    # }
-    # check if there is overlap in gisib
     validator = GisibValidator(
         assets=assets,
-        gisib_id_col=gisib_id_col,
-        relatieve_hoogteligging_col=gisib_hoogteligging_col,
-        objecttype_col=gisib_objecttype_col,
-        gpkg_path=f"{today}_overlaps_{gebied.lower()}.gpkg",
+        gisib_id_col=global_vars.gisib_id_col,
+        relatieve_hoogteligging_col=global_vars.gisib_hoogteligging_col,
+        objecttype_col=global_vars.gisib_objecttype_col,
+        gpkg_path=f"{global_vars.today}_overlaps_{global_vars.gebied.lower()}.gpkg",
     )
     valid = validator.run_all_validations()
     # # if there is no overlap, continue
@@ -99,20 +63,21 @@ if __name__ == "__main__":
         controller = Controller(
             assets=assets,
             bgt=bgt,
-            gisib_id_col=gisib_id_col,
-            bgt_id_col=bgt_id_col,
-            gisib_hoogteligging_col=gisib_hoogteligging_col,
-            bgt_hoogteligging_col=bgt_hoogteligging_col,
+            gisib_id_col=global_vars.gisib_id_col,
+            bgt_id_col=global_vars.bgt_id_col,
+            gisib_hoogteligging_col=global_vars.gisib_hoogteligging_col,
+            bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col,
         )
-        buckets = controller.create_buckets()
+        automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
+        buckets = controller.manual_buckets(automatic_bucket_values=automatic_buckets)
 
-        if buckets:
-            automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
+        # if buckets:
+        #     automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
             # controller.write_buckets_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
-
-            controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),
-                                                           directory="./output/"+date.today().isoformat() +"_" +gebied.lower(),
-                                                           automatic_bucket_values=automatic_buckets)
+            # manual_buckets = controller.()
+            # controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),
+            #                                                directory="./output/"+date.today().isoformat() +"_" +gebied.lower(),
+            #                                                automatic_bucket_values=automatic_buckets)
     # results = controller.run()
 
     # # Run pre-validation

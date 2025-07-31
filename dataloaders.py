@@ -3,11 +3,14 @@ from enum import Enum
 import pandas as pd
 from enums import AssetType
 from columns_config import column_mappings
-from typing import Optional, Union, List, Tuple
+from dataloaders import read_gisib
+from columns_config import ASSET_SCHEMAS
 import geopandas as gpd
-from shapely import Polygon
-import logging
 import fiona
+import logging
+from typing import Optional, Union, List, Tuple,Dict
+from shapely.geometry import Polygon
+
 
 logger = logging.getLogger(__name__)
 
@@ -87,32 +90,6 @@ def read_bgt_shapes(
     # Set CRS to EPSG:28992
     gdfs = gdfs.set_crs(28992, allow_override=True)
     return gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
-
-
-def read_bgt(fp_bgt: str, columns: List[str]) -> gpd.GeoDataFrame:
-    """
-    Reads a BGT dataset and returns a cleaned GeoDataFrame.
-
-    Args:
-        fp_bgt (str): Path to the BGT file.
-        columns (list): List of columns to load.
-
-    Returns:
-        gpd.GeoDataFrame: Cleaned and filtered BGT data.
-    """
-    gdf = (
-        gpd.read_file(fp_bgt, columns=columns)
-        .assign(geometry=lambda df: df.geometry.buffer(0))  # Clean invalid geometries
-        .loc[lambda df: df.lokaalid.notnull()]  # Keep only rows with a lokaalid
-    )
-    return gdf, AssetType  # adjust as needed
-
-import geopandas as gpd
-import fiona
-import logging
-import numpy as np
-from typing import Optional, Union, List, Tuple
-from shapely.geometry import Polygon
 
 def read_gisib(
     fp_gisib: str,
@@ -251,3 +228,48 @@ def read_gebied(filepath: str, gebied: str) -> Tuple[float, float, float, float]
 
 
     return selection.geometry.unary_union
+
+
+
+def load_assets(
+    bbox: Optional[tuple] = None,
+    gebied_col: str = "gebied",
+    gebied: Optional[str] = None
+) -> Dict[str, gpd.GeoDataFrame]:
+    """
+    Load all GISIB asset layers filtered by bbox and gebied.
+
+    Args:
+        bbox (tuple, optional): Bounding box for spatial filtering (xmin, ymin, xmax, ymax)
+        gebied_col (str): Column name used for gebied filtering
+        gebied (str, optional): Value to match in the gebied column
+
+    Returns:
+        Dict[str, GeoDataFrame]: Dictionary of asset name -> GeoDataFrame
+    """
+    return {
+        AssetType.TERREINDEEL.value: read_gisib(
+            fp_gisib=os.environ.get("FP_TRD"),
+            columns=ASSET_SCHEMAS[AssetType.TERREINDEEL],
+            layer=AssetType.TERREINDEEL,
+            bbox=bbox,
+            filter_column=gebied_col,
+            filter_value=gebied,
+        ),
+        AssetType.GROENOBJECTEN.value: read_gisib(
+            fp_gisib=os.environ.get("FP_GRN"),
+            columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN],
+            layer=AssetType.GROENOBJECTEN,
+            bbox=bbox,
+            filter_column=gebied_col,
+            filter_value=gebied,
+        ),
+        AssetType.VERHARDINGEN.value: read_gisib(
+            fp_gisib=os.environ.get("FP_VRH"),
+            columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN],
+            layer=AssetType.VERHARDINGEN,
+            bbox=bbox,
+            filter_column=gebied_col,
+            filter_value=gebied,
+        ),
+    }

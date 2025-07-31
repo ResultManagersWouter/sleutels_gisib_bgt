@@ -1,7 +1,7 @@
 from typing import Dict
 from geopandas import GeoDataFrame
 import logging
-from buckets import BucketsVRH,AUTOMATIC_BUCKETS_VRH
+from buckets import BucketsVRH
 
 from .matcher_base import MatcherBase
 

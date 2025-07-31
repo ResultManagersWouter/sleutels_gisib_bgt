@@ -106,7 +106,7 @@ class MatcherBase:
         Annotate with perfect_match and rel_match flags.
         """
         df = df.copy()
-        df["perfect_match"] = (df["overlap_bgt"] > 0.95) & (df["overlap_gisib"] > 0.95)
+        df["perfect_match"] = (df["overlap_bgt"] > 0.90) & (df["overlap_gisib"] > 0.90)
         rel_hoog = df[self.gisib_hoogteligging_col].fillna(0).astype(int)
         hoogtelig = df[self.bgt_hoogteligging_col].fillna(0).astype(int)
         df["rel_match"] = rel_hoog == hoogtelig
@@ -214,8 +214,8 @@ class MatcherBase:
         gdf["geometry_equal"] = gdf.set_geometry("geometry_gisib").geom_equals_exact(
             gdf["geometry_bgt"].set_crs(intersection_df.crs), tolerance=tolerance
         )
-        gdf["overlap_gisib5"] = (gdf["overlap_gisib"] > 0.95) & (gdf["overlap_gisib"] < 1.05)
-        gdf["overlap_bgt5"] = (gdf["overlap_bgt"] > 0.95) & (gdf["overlap_bgt"] < 1.05)
+        gdf["overlap_gisib10"] = (gdf["overlap_gisib"] > 0.90) & (gdf["overlap_gisib"] < 1.1)
+        gdf["overlap_bgt10"] = (gdf["overlap_bgt"] > 0.90) & (gdf["overlap_bgt"] < 1.1)
         gdf["guid_count"] = gdf["guid_list"].apply(len)
         return gdf
 
@@ -240,8 +240,8 @@ class MatcherBase:
         gdf["geometry_equal"] = gdf.set_geometry("geometry_gisib").geom_equals_exact(
             gdf["geometry_bgt"].set_crs(intersection_df.crs), tolerance=tolerance
         )
-        gdf["overlap_gisib5"] = (gdf["overlap_gisib"] > 0.95) & (gdf["overlap_gisib"] < 1.05)
-        gdf["overlap_bgt5"] = (gdf["overlap_bgt"] > 0.95) & (gdf["overlap_bgt"] < 1.05)
+        gdf["overlap_gisib10"] = (gdf["overlap_gisib"] > 0.90) & (gdf["overlap_gisib"] < 1.1)
+        gdf["overlap_bgt10"] = (gdf["overlap_bgt"] > 0.90) & (gdf["overlap_bgt"] < 1.1)
         gdf["lokaalid_count"] = gdf["lokaalid_list"].apply(len)
         return gdf
 
@@ -251,8 +251,8 @@ class MatcherBase:
         """
         mask = (
             (bgt_gisib["guid_count"] > 1)
-            & bgt_gisib["overlap_bgt5"]
-            & bgt_gisib["overlap_gisib5"]
+            & bgt_gisib["overlap_bgt10"]
+            & bgt_gisib["overlap_gisib10"]
         )
         return set(bgt_gisib.loc[mask, "guid_list"].explode())
 
@@ -262,8 +262,8 @@ class MatcherBase:
         """
         mask = (
             (bgt_gisib["guid_count"] > 1)
-            & bgt_gisib["overlap_bgt5"]
-            & bgt_gisib["overlap_gisib5"]
+            & bgt_gisib["overlap_bgt10"]
+            & bgt_gisib["overlap_gisib10"]
             & (bgt_gisib["ONDERHOUDSPLICHTIGE"] == 1)
             & (bgt_gisib["TYPE_GEDETAILLEERD"] == 1)
             & (bgt_gisib["BEHEERDER_GEDETAILLEERD"] < 2)
@@ -282,6 +282,12 @@ class MatcherBase:
         bgt_gisib = self.build_bgt_gisib_grouped(intersection_df)
         guids_to_merge = self._select_1_bgt_to_n_gisib_overlap5_merge(bgt_gisib)
         guids_to_split = self._select_1_bgt_to_n_gisib_overlap5_split(bgt_gisib) - guids_to_merge
+        print("-------------------guid to merge------------------------")
+        print("{13030499-AF36-4D9C-8FE4-BD2A41E37EFA}" in guids_to_merge)
+        print("-------------------------------------------")
+        print("------------------guid to split-------------------------")
+        print("{13030499-AF36-4D9C-8FE4-BD2A41E37EFA}" in guids_to_split)
+        print("-------------------------------------------")
 
         bucket_merge = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_merge)]
         bucket_split = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_split)]
@@ -297,9 +303,12 @@ class MatcherBase:
         Partition for GISIB objects that overlap ≈ 100% with >1 BGT.
         """
         gisib_bgt = self.build_gisib_bgt_grouped(intersection_df)
-        mask = (gisib_bgt["overlap_bgt5"]) & (gisib_bgt["overlap_gisib5"]) & (gisib_bgt["lokaalid_count"] > 1)
+        mask = (gisib_bgt["overlap_bgt10"]) & (gisib_bgt["overlap_gisib10"]) & (gisib_bgt["lokaalid_count"] > 1)
         guids_to_split = set(gisib_bgt.loc[mask, self.gisib_id_col])
         bucket_split = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_split)]
+        print("------------------SPLIT GISIB-------------------------")
+        print("{13030499-AF36-4D9C-8FE4-BD2A41E37EFA}" in guids_to_split)
+        print("-------------------------------------------")
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(guids_to_split)]
         return bucket_split, remaining
 
@@ -408,6 +417,9 @@ class MatcherBase:
             BucketsBase.BUCKET6.value: bucket6,
             BucketsBase.REMAINING.value: remaining
         }
+        x = result[BucketsBase.BUCKET2.value]
+        print("What is the bucketname")
+        print(BucketsBase.BUCKET2.value)
 
         return result
 
