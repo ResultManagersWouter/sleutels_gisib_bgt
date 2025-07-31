@@ -81,6 +81,8 @@ class Controller:
 
                 # Filter GISIB features
                 gisib_ids = bucket_gdf[self.gisib_id_col].dropna().unique()
+                print(filename,bucket_name)
+                print("{ECB2B732-8CF3-4691-8122-747192EB285F}" in gisib_ids)
                 gisib_layer = asset_gisib_gdf[asset_gisib_gdf[self.gisib_id_col].isin(gisib_ids)]
                 if not gisib_layer.empty:
                     gisib_layer.to_file(filename, layer=f"gisib - {bucket_name}", driver="GPKG")
