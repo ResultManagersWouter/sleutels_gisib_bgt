@@ -31,9 +31,10 @@ if __name__ == "__main__":
         mapping=column_mapping_bgt_controle_tabel
     )
 
+    # ControleTabel is mapped:
     # based on the controletabel the bgt types, we are going to filter on the shape file
     objecttypes_bgt = (
-        controle_tabel.loc[:, ObjectType.CONTROLE_TABEL_BGT_OBJECT.value]
+        controle_tabel.loc[:, ObjectType.BGTOBJECTTYPE.value]
         .unique()
         .tolist()
     )
