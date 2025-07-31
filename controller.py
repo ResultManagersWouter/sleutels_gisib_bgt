@@ -30,12 +30,11 @@ class Controller:
         self.bgt_hoogteligging_col = bgt_hoogteligging_col
         self.created_buckets = None
 
-    def create_buckets(self):
+    def create_buckets(self,verbose: bool = False):
         buckets = {}
         for asset_name, matcher_class in ASSET_MATCHER_CLASSES.items():
 
             if asset_name.value in self.assets:
-                print(asset_name.value)
                 matcher = matcher_class(
                     gisib_gdf=self.assets[asset_name.value],
                     bgt_gdf=self.bgt,
