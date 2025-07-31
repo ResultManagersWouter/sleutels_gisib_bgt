@@ -47,7 +47,7 @@ class Controller:
         self.created_buckets = buckets
         return buckets
 
-    def write_overlaps_to_geopackages(self,suffix: str, directory: str = "."):
+    def write_buckets_to_geopackages(self,suffix: str, directory: str = "."):
         """
         For each asset, writes each bucket (as two layers: _bgt and _gisib)
         to a GeoPackage with a name based on the asset_name and a user-provided suffix.
@@ -90,6 +90,61 @@ class Controller:
 
 
             print(f"Written {layers_written} layers to {filename} for {asset_name}.")
+
+    def write_manual_buckets_to_geopackages(
+            self,
+            suffix: str,
+            directory: str = ".",
+            automatic_bucket_values: list[str] = None,
+    ):
+        """
+        Writes only manual buckets (those NOT in automatic_bucket_values) to GeoPackages.
+
+        Args:
+            suffix: Suffix for the output filename.
+            directory: Output directory (created if it doesn't exist).
+            automatic_bucket_values: List of bucket value strings (e.g. "geom_1_to_1") that are automatic.
+                                     Only buckets NOT in this list will be written.
+        """
+        if not self.created_buckets:
+            results = self.create_buckets()
+        else:
+            results = self.created_buckets
+
+        os.makedirs(directory, exist_ok=True)
+        print()
+        print(automatic_bucket_values)
+
+        if automatic_bucket_values is None:
+            raise ValueError("You must provide the list of automatic bucket values.")
+
+        automatic_bucket_values_set = set(automatic_bucket_values)
+
+        for asset_name, buckets in results.items():
+            filename = os.path.join(directory, f"{asset_name}_{suffix}.gpkg")
+            asset_gisib_gdf = self.assets[asset_name]
+            layers_written = 0
+
+            for bucket_name, bucket_gdf in buckets.items():
+                if bucket_name in automatic_bucket_values_set or bucket_gdf.empty:
+                    continue  # Skip automatic or empty buckets
+
+                try:
+                    bgt_ids = bucket_gdf[self.bgt_id_col].dropna().unique()
+                    bgt_layer = self.bgt[self.bgt[self.bgt_id_col].isin(bgt_ids)]
+                except KeyError:
+                    logging.warning(f"Bucket {bucket_name} has no {self.bgt_id_col}")
+                    bgt_layer = None
+
+                if bgt_layer is not None and not bgt_layer.empty:
+                    bgt_layer.to_file(filename, layer=f"bgt - {bucket_name}", driver="GPKG")
+                    layers_written += 1
+
+                gisib_ids = bucket_gdf[self.gisib_id_col].dropna().unique()
+                gisib_layer = asset_gisib_gdf[asset_gisib_gdf[self.gisib_id_col].isin(gisib_ids)]
+                if not gisib_layer.empty:
+                    gisib_layer.to_file(filename, layer=f"gisib - {bucket_name}", driver="GPKG")
+                    layers_written += 1
 
     def match_gisib_bgt_ids(self, suffix: str, directory: str = "."):
         if not self.created_buckets:
