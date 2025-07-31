@@ -9,7 +9,7 @@ from matchers import GroenobjectenMatcher, TerreindelenMatcher, VerhardingenMatc
 from columns_config import BGT_SHAPE_COLUMNS, ASSET_SCHEMAS, CONTROLE_TABEL_COLUMNS
 from controller import Controller
 from datetime import date
-from buckets import AUTOMATIC_BUCKETS_VRH,AUTOMATIC_BUCKETS
+from buckets import ALL_AUTOMATIC_BUCKETS,AUTOMATIC_BUCKETS
 
 logger = logging.getLogger(__name__)
 
@@ -107,9 +107,7 @@ if __name__ == "__main__":
         buckets = controller.create_buckets()
 
         if buckets:
-            print(AUTOMATIC_BUCKETS)
-            print(AUTOMATIC_BUCKETS_VRH)
-            automatic_buckets = [bucket.value for bucket in AUTOMATIC_BUCKETS_VRH]
+            automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
             # controller.write_buckets_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
 
             controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),
