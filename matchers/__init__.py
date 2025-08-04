@@ -1,3 +1,5 @@
 from .matcher_groenobjecten import GroenobjectenMatcher
 from .matcher_terreindeel import TerreindelenMatcher
 from .matcher_verhardingsobjecten import VerhardingenMatcher
+
+from.filter_matches import filter_hagen

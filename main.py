@@ -8,8 +8,9 @@ from enums import ControleTabelGisib, ObjectType
 import global_vars
 from columns_config import BGT_SHAPE_COLUMNS, column_mapping_bgt_controle_tabel, CONTROLE_TABEL_COLUMNS
 from controller import Controller
-from controller_utils import should_process_buckets
+from controller_utils import should_process_buckets,get_invalid_combinations_by_control_table
 from buckets import ALL_AUTOMATIC_BUCKETS
+from matchers import GroenobjectenMatcher
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,17 @@ if __name__ == "__main__":
         gpkg_path=f"{global_vars.today}_overlaps_{global_vars.gebied.lower()}.gpkg",
     )
     valid = validator.run_all_validations()
-    # # if there is no overlap, continue
+
+    # matcher = GroenobjectenMatcher(gisib_gdf = assets["groenobjecten"],
+    #                       bgt_gdf = bgt,
+    #                                gisib_id_col=global_vars.gisib_id_col,
+    #                                bgt_id_col=global_vars.bgt_id_col,
+    #                                gisib_hoogteligging_col=global_vars.gisib_hoogteligging_col,
+    #                                bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col
+    #                                )
+    # overlap = matcher.calculate_overlap_df()
+
+    # if there is no overlap, continue
     if valid.empty:
         controller = Controller(
             assets=assets,
@@ -69,6 +80,7 @@ if __name__ == "__main__":
             gisib_hoogteligging_col=global_vars.gisib_hoogteligging_col,
             bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col,
         )
+
         automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
         buckets_to_process = controller.filtered_buckets(
             bucket_type="manual",
@@ -80,11 +92,20 @@ if __name__ == "__main__":
             skip_types=global_vars.SKIP_TYPES,
         )
 
-        # if not process_required:
-        auto_buckets = controller.filtered_buckets(
-                bucket_type="automatic",
-                automatic_bucket_values=automatic_buckets
-            )
+        if not process_required:
+            auto_buckets = controller.filtered_buckets(
+                    bucket_type="automatic",
+                    automatic_bucket_values=automatic_buckets
+                )
+            invalid_type_combinations = get_invalid_combinations_by_control_table(buckets=auto_buckets,
+                                                               control_df=controle_tabel,
+                                                               guid_column=global_vars.gisib_id_col
+                                                               )
+        if not invalid_type_combinations:
+    #         # start writing...
+            pass
+
+
         # controller.write_buckets_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
         # manual_buckets = controller.()
         # controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),

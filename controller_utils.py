@@ -1,4 +1,6 @@
 import logging
+import pandas as pd
+
 logger = logging.getLogger(__name__)
 def should_process_buckets(
         buckets: dict,
@@ -39,3 +41,37 @@ def should_process_buckets(
         logger.warning(f" - {asset_name} - {bucket_name}")
 
     return True
+
+
+def get_invalid_combinations_by_control_table(
+    buckets: dict[str, dict[str, pd.DataFrame]],
+    control_df: pd.DataFrame,
+    guid_column: str = "GUID"
+) -> dict[str, list[str]]:
+    """
+    Returns a dict mapping each asset (e.g. "verhardingen") to a list of GUIDs
+    that do not match any valid combination in the control_df.
+    """
+    sentinel = object()
+    columns_to_check = control_df.columns
+    control_filled = control_df[columns_to_check].fillna(sentinel)
+    control_combos = set(zip(*[control_filled[col] for col in columns_to_check]))
+
+    invalid_by_asset = {}
+
+    for asset, categories in buckets.items():
+        invalid_guids = []
+
+        for category_name, df in categories.items():
+            df_filled = df[columns_to_check].fillna(sentinel)
+            df_combos = list(zip(*[df_filled[col] for col in columns_to_check]))
+
+            is_valid = [combo in control_combos for combo in df_combos]
+            invalid_rows = df.loc[[not ok for ok in is_valid]]
+
+            invalid_guids.extend(invalid_rows[guid_column].dropna().astype(str).tolist())
+
+        if invalid_guids:
+            invalid_by_asset[asset] = list(set(invalid_guids))
+
+    return invalid_by_asset

@@ -94,12 +94,16 @@ class MatcherBase:
 
     def filter_overlap_min_ratio(self, overlap_df: GeoDataFrame) -> GeoDataFrame:
         """
-        Retain only intersections above the configured minimum overlap ratio.
+        Retain only intersections where at least one overlap value is above the configured minimum,
+        and the combined overlap is > 0.5.
         """
         return overlap_df[
-            (overlap_df["overlap_bgt"] >= self.min_ratio) |
-            (overlap_df["overlap_gisib"] >= self.min_ratio)
-        ].copy()
+            (
+                    (overlap_df["overlap_bgt"] >= self.min_ratio) |
+                    (overlap_df["overlap_gisib"] >= self.min_ratio)
+            ) &
+            ((overlap_df["overlap_bgt"] + overlap_df["overlap_gisib"]) > 0.6)
+            ].copy()
 
     def _add_match_flags(self, df: GeoDataFrame) -> GeoDataFrame:
         """
@@ -133,6 +137,7 @@ class MatcherBase:
         )
         subset3 = merged_df[merged_df[self.gisib_id_col].isin(guids_multi_rel) & merged_df["perfect_match"]]
         rest = merged_df[~merged_df[self.gisib_id_col].isin(subset3[self.gisib_id_col])]
+
 
         return gpd.GeoDataFrame(pd.concat([subset3, rest]), crs=df.crs)
 
