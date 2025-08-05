@@ -39,39 +39,93 @@ def should_process_buckets(
     logger.info("🚧 Buckets to process:")
     for asset_name, bucket_name in buckets_to_process:
         logger.warning(f" - {asset_name} - {bucket_name}")
+import pandas as pd
+import logging
 
-    return True
-
+logger = logging.getLogger(__name__)
 
 def get_invalid_combinations_by_control_table(
     buckets: dict[str, dict[str, pd.DataFrame]],
     control_df: pd.DataFrame,
-    guid_column: str = "GUID"
-) -> dict[str, list[str]]:
+    guid_column: str,
+    bgt_column: str,
+    overlap_bgt_column: str,
+    overlap_gisib_column: str,
+    verbose: bool = False
+) -> tuple[dict[str, list[dict]], dict[str, dict[str, pd.DataFrame]]]:
     """
-    Returns a dict mapping each asset (e.g. "verhardingen") to a list of GUIDs
-    that do not match any valid combination in the control_df.
+    Returns:
+    - A dict mapping each asset (e.g. "verhardingen") to a list of dicts with keys:
+        - 'guid': GUID of the invalid object
+        - 'lokaalid': LOKAALID of the object
+        - 'min_overlap': min(overlap_bgt, overlap_gisib)
+    - A dict of filtered dataframes with only valid rows per asset and category (i.e. invalid ones are removed).
     """
-    sentinel = object()
-    columns_to_check = control_df.columns
-    control_filled = control_df[columns_to_check].fillna(sentinel)
-    control_combos = set(zip(*[control_filled[col] for col in columns_to_check]))
+    columns_to_check = control_df.columns.tolist()
+
+    # Convert control table into a set of tuples (with None for NaN)
+    control_combos = set(
+        tuple(None if pd.isna(val) else val for val in row)
+        for row in control_df[columns_to_check].itertuples(index=False, name=None)
+    )
 
     invalid_by_asset = {}
+    filtered_buckets = {}
 
     for asset, categories in buckets.items():
-        invalid_guids = []
+        invalid_entries = []
+        valid_categories = {}
 
         for category_name, df in categories.items():
-            df_filled = df[columns_to_check].fillna(sentinel)
-            df_combos = list(zip(*[df_filled[col] for col in columns_to_check]))
+            if df.empty:
+                valid_categories[category_name] = df
+                continue
 
-            is_valid = [combo in control_combos for combo in df_combos]
-            invalid_rows = df.loc[[not ok for ok in is_valid]]
+            row_combos = [
+                tuple(None if pd.isna(val) else val for val in row)
+                for row in df[columns_to_check].itertuples(index=False, name=None)
+            ]
 
-            invalid_guids.extend(invalid_rows[guid_column].dropna().astype(str).tolist())
+            is_valid = [combo in control_combos for combo in row_combos]
+            valid_indices = [i for i, valid in enumerate(is_valid) if valid]
+            invalid_indices = [i for i, valid in enumerate(is_valid) if not valid]
 
-        if invalid_guids:
-            invalid_by_asset[asset] = list(set(invalid_guids))
+            valid_df = df.iloc[valid_indices]
+            valid_categories[category_name] = valid_df
 
-    return invalid_by_asset
+            if invalid_indices:
+                for i in invalid_indices:
+                    row = df.iloc[i]
+                    guid = row.get(guid_column, None)
+                    lokaalid = row.get(bgt_column, None)
+                    overlap_bgt = row.get(overlap_bgt_column, None)
+                    overlap_gisib = row.get(overlap_gisib_column, None)
+
+                    try:
+                        min_overlap = min(float(overlap_bgt), float(overlap_gisib))
+                    except (TypeError, ValueError):
+                        min_overlap = None
+
+                    entry = {
+                        "guid": str(guid) if pd.notna(guid) else None,
+                        "lokaalid": str(lokaalid) if pd.notna(lokaalid) else None,
+                        "min_overlap": min_overlap
+                    }
+                    invalid_entries.append(entry)
+
+                    if verbose:
+                        combo_dict = {
+                            col: (None if pd.isna(row[col]) else row[col])
+                            for col in columns_to_check
+                        }
+                        logger.info(
+                            f"[INVALID] Asset='{asset}', Category='{category_name}', GUID='{guid}': "
+                            f"Values={combo_dict}, Min Overlap={min_overlap}"
+                        )
+
+        if invalid_entries:
+            invalid_by_asset[asset] = invalid_entries
+
+        filtered_buckets[asset] = valid_categories
+
+    return invalid_by_asset, filtered_buckets

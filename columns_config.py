@@ -4,6 +4,8 @@ from enums import AssetType
 # from the controle tabel to BGT
 column_mapping_bgt_controle_tabel = {
     'BGT Objecttype': 'ObjectType',  # corrected!
+    "Type":"TYPE",
+    "Type gedetailleerd":"TYPE_GEDETAILLEERD",
     'Objecttype': 'OBJECTTYPE',
     'BGT Fysiek voorkomen (geonovum)': 'FysiekVoor',
     'IMGeo Fysiek voorkomen plus (geonovum)': 'FysiekVPlu',
@@ -39,6 +41,8 @@ BGT_SHAPE_COLUMNS = [
 
 CONTROLE_TABEL_COLUMNS = [
     "Objecttype",
+    "Type",
+    # "Type gedetailleerd",
     "BGT Objecttype",
     "BGT Fysiek voorkomen (geonovum)",
     "IMGeo Fysiek voorkomen plus (geonovum)",

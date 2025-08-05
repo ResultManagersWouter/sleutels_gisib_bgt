@@ -1,7 +1,6 @@
 from enums import AssetType
 from matchers import VerhardingenMatcher, GroenobjectenMatcher, TerreindelenMatcher
 from geopandas import GeoDataFrame
-from bucket_processor import BucketProcessor, ASSET_BUCKET_ENUM
 import logging
 import pandas as pd
 import os

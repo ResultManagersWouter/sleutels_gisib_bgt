@@ -229,11 +229,11 @@ def read_gebied(filepath: str, gebied: str) -> Tuple[float, float, float, float]
     return selection.geometry.unary_union
 
 
-
 def load_assets(
     bbox: Optional[tuple] = None,
     gebied_col: str = "gebied",
-    gebied: Optional[str] = None
+    gebied: Optional[str] = None,
+    use_schema_columns: bool = True
 ) -> Dict[str, gpd.GeoDataFrame]:
     """
     Load all GISIB asset layers filtered by bbox and gebied.
@@ -242,6 +242,7 @@ def load_assets(
         bbox (tuple, optional): Bounding box for spatial filtering (xmin, ymin, xmax, ymax)
         gebied_col (str): Column name used for gebied filtering
         gebied (str, optional): Value to match in the gebied column
+        use_schema_columns (bool): If True, loads only columns defined in ASSET_SCHEMAS. If False, loads all columns.
 
     Returns:
         Dict[str, GeoDataFrame]: Dictionary of asset name -> GeoDataFrame
@@ -249,7 +250,7 @@ def load_assets(
     return {
         AssetType.TERREINDEEL.value: read_gisib(
             fp_gisib=os.environ.get("FP_TRD"),
-            columns=ASSET_SCHEMAS[AssetType.TERREINDEEL],
+            columns=ASSET_SCHEMAS[AssetType.TERREINDEEL] if use_schema_columns else None,
             layer=AssetType.TERREINDEEL,
             bbox=bbox,
             filter_column=gebied_col,
@@ -257,7 +258,7 @@ def load_assets(
         ),
         AssetType.GROENOBJECTEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_GRN"),
-            columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN],
+            columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN] if use_schema_columns else None,
             layer=AssetType.GROENOBJECTEN,
             bbox=bbox,
             filter_column=gebied_col,
@@ -265,10 +266,11 @@ def load_assets(
         ),
         AssetType.VERHARDINGEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_VRH"),
-            columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN],
+            columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN] if use_schema_columns else None,
             layer=AssetType.VERHARDINGEN,
             bbox=bbox,
             filter_column=gebied_col,
             filter_value=gebied,
         ),
     }
+

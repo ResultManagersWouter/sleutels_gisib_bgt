@@ -6,11 +6,18 @@ from dotenv import load_dotenv
 from gisib_validator import GisibValidator
 from enums import ControleTabelGisib, ObjectType
 import global_vars
-from columns_config import BGT_SHAPE_COLUMNS, column_mapping_bgt_controle_tabel, CONTROLE_TABEL_COLUMNS
+from columns_config import (
+    BGT_SHAPE_COLUMNS,
+    column_mapping_bgt_controle_tabel,
+    CONTROLE_TABEL_COLUMNS,
+)
 from controller import Controller
-from controller_utils import should_process_buckets,get_invalid_combinations_by_control_table
+from controller_utils import (
+    should_process_buckets,
+    get_invalid_combinations_by_control_table,
+)
 from buckets import ALL_AUTOMATIC_BUCKETS
-from matchers import GroenobjectenMatcher
+from bucket_processor import process_and_export_per_asset_mode
 
 logger = logging.getLogger(__name__)
 
@@ -29,15 +36,13 @@ if __name__ == "__main__":
         columns=CONTROLE_TABEL_COLUMNS,
         filterEnum=ControleTabelGisib,
         filter_col=ObjectType.CONTROLE_TABEL_GISIB_OBJECT.value,
-        mapping=column_mapping_bgt_controle_tabel
+        mapping=column_mapping_bgt_controle_tabel,
     )
 
     # ControleTabel is mapped:
     # based on the controletabel the bgt types, we are going to filter on the shape file
     objecttypes_bgt = (
-        controle_tabel.loc[:, ObjectType.BGTOBJECTTYPE.value]
-        .unique()
-        .tolist()
+        controle_tabel.loc[:, ObjectType.BGTOBJECTTYPE.value].unique().tolist()
     )
     # bgt = read_bgt(fp_bgt=os.environ.get('FP_BGT'),columns=BGT_COLUMNS)
     bgt = read_bgt_shapes(
@@ -48,7 +53,7 @@ if __name__ == "__main__":
         bbox=bbox,
     )
     # Load assets
-    assets = assets = load_assets(
+    assets = load_assets(
         bbox=bbox, gebied_col=global_vars.gebied_col, gebied=global_vars.gebied
     )
 
@@ -83,8 +88,7 @@ if __name__ == "__main__":
 
         automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
         buckets_to_process = controller.filtered_buckets(
-            bucket_type="manual",
-            automatic_bucket_values=automatic_buckets
+            bucket_type="manual", automatic_bucket_values=automatic_buckets
         )
         process_required = should_process_buckets(
             buckets_to_process,
@@ -92,40 +96,96 @@ if __name__ == "__main__":
             skip_types=global_vars.SKIP_TYPES,
         )
 
+        # I have checked them
+        # process_required = False
+
         if not process_required:
             auto_buckets = controller.filtered_buckets(
-                    bucket_type="automatic",
-                    automatic_bucket_values=automatic_buckets
+                bucket_type="automatic", automatic_bucket_values=automatic_buckets
+            )
+            invalid_type_combinations, filtered_auto_buckets = (
+                get_invalid_combinations_by_control_table(
+                    buckets=auto_buckets,
+                    control_df=controle_tabel,
+                    guid_column=global_vars.gisib_id_col,
+                    bgt_column = global_vars.bgt_id_col,
+                    overlap_bgt_column = "overlap_bgt",
+                    overlap_gisib_column = "overlap_gisib",
+                    verbose=True,
                 )
-            invalid_type_combinations = get_invalid_combinations_by_control_table(buckets=auto_buckets,
-                                                               control_df=controle_tabel,
-                                                               guid_column=global_vars.gisib_id_col
-                                                               )
+            )
         if not invalid_type_combinations:
-    #         # start writing...
-            pass
+            output_dir = f"output/{global_vars.gebied}_{global_vars.today}".replace(
+                " ", "_"
+            )
+
+            # Create the directory
+            os.makedirs(output_dir, exist_ok=True)
+            logger.info(f"Created output directory: {output_dir}")
+            asset_all_columns = load_assets(
+                bbox=bbox,
+                gebied_col=global_vars.gebied_col,
+                gebied=global_vars.gebied,
+                use_schema_columns=False,
+            )
+            process_and_export_per_asset_mode(
+                filtered_auto_buckets=filtered_auto_buckets,
+                gisib_datasets=asset_all_columns,
+                gisib_id_col=global_vars.gisib_id_col,
+                bgt_id_col=global_vars.bgt_id_col,
+                output_dir=output_dir,
+            )
+
+            def validate_excel_matches(
+                    output_dir: str,
+                    filtered_auto_buckets: dict[str, dict],
+                    gisib_id_col: str,
+                    bgt_id_col: str
+            ):
+                for asset, bucket_dict in filtered_auto_buckets.items():
+                    file_path = os.path.join(output_dir, f"matched_{asset}.xlsx")
+                    if not os.path.exists(file_path):
+                        logger.error(f"Missing Excel file for asset: {asset}")
+                        continue
+
+                    try:
+                        df_match = pd.read_excel(file_path, sheet_name="match")
+                    except Exception as e:
+                        logger.error(f"Could not read 'match' sheet in {file_path}: {e}")
+                        continue
+
+                    # Drop NA values just in case
+                    df_match = df_match.dropna(subset=[gisib_id_col, bgt_id_col])
+
+                    total_matches = len(df_match)
+                    unique_gisib = df_match[gisib_id_col].nunique()
+                    unique_bgt = df_match[bgt_id_col].nunique()
+
+                    logger.info(
+                        f"[{asset}] total matches: {total_matches}, unique {gisib_id_col}: {unique_gisib}, unique {bgt_id_col}: {unique_bgt}")
+
+                    if total_matches != unique_gisib:
+                        logger.warning(f"[{asset}] Duplicate {gisib_id_col} values found.")
+                    if total_matches != unique_bgt:
+                        logger.warning(f"[{asset}] Duplicate {bgt_id_col} values found.")
+
+                    # Compare to input size
+                    input_rows = sum(len(df) for df in bucket_dict.values())
+                    if total_matches != input_rows:
+                        logger.warning(
+                            f"[{asset}] Not all objects are covered. Input: {input_rows}, Matched: {total_matches}")
+                    else:
+                        logger.info(f"[{asset}] ✅ All objects are covered.")
 
 
-        # controller.write_buckets_to_geopackages(suffix=gebied.lower(),directory="./output/"+date.today().isoformat() +"_" +gebied.lower())
-        # manual_buckets = controller.()
-        # controller.write_manual_buckets_to_geopackages(suffix=gebied.lower(),
-        #                                                directory="./output/"+date.today().isoformat() +"_" +gebied.lower(),
-        #                                                automatic_bucket_values=automatic_buckets)
-    # results = controller.run()
+            validate_excel_matches(
+                output_dir=output_dir,
+                filtered_auto_buckets=filtered_auto_buckets,
+                gisib_id_col=global_vars.gisib_id_col,
+                bgt_id_col=global_vars.bgt_id_col
+            )
 
-    # # Run pre-validation
-    # # validator = GisibValidator(assets = filtered_assets,threshold = 0.5)
-    # # check_overlaps = validator.run_all_validations()
-    # gisib = VerhardingenMatcher(gisib_gdf=filtered_assets[AssetType.VERHARDINGEN.value],
-    #                              bgt_gdf =bgt,
-    #                              gisib_id_col = "guid",
-    #                              bgt_id_col="lokaalid",
-    #                              gisib_hoogteligging_col="relatieve_hoogteligging",
-    #                              bgt_hoogteligging_col="hoogtelig")
-    # # overlaps = groen.calculate_overlap_df()
-    # # bgt_gisib = groen.build_bgt_gisib_grouped(intersection_df=overlaps)
-    # intersection_df = gisib.preprocess()
-    # buckets = gisib.run()
+            #         # start writing...
 
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
