@@ -41,8 +41,8 @@ BGT_SHAPE_COLUMNS = [
 
 CONTROLE_TABEL_COLUMNS = [
     "Objecttype",
-    "Type",
-    # "Type gedetailleerd",
+    # "Type", #do not match
+    # "Type gedetailleerd", # do not match
     "BGT Objecttype",
     "BGT Fysiek voorkomen (geonovum)",
     "IMGeo Fysiek voorkomen plus (geonovum)",
