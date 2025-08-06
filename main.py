@@ -18,6 +18,7 @@ from controller_utils import (
 )
 from buckets import ALL_AUTOMATIC_BUCKETS
 from bucket_processor import process_and_export_per_asset_mode
+from validate_output import validate_excel_matches
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +129,7 @@ if __name__ == "__main__":
                 gebied=global_vars.gebied,
                 use_schema_columns=False,
             )
+
             process_and_export_per_asset_mode(
                 filtered_auto_buckets=filtered_auto_buckets,
                 gisib_datasets=asset_all_columns,
@@ -136,56 +138,13 @@ if __name__ == "__main__":
                 output_dir=output_dir,
             )
 
-            def validate_excel_matches(
-                    output_dir: str,
-                    filtered_auto_buckets: dict[str, dict],
-                    gisib_id_col: str,
-                    bgt_id_col: str
-            ):
-                for asset, bucket_dict in filtered_auto_buckets.items():
-                    file_path = os.path.join(output_dir, f"matched_{asset}.xlsx")
-                    if not os.path.exists(file_path):
-                        logger.error(f"Missing Excel file for asset: {asset}")
-                        continue
-
-                    try:
-                        df_match = pd.read_excel(file_path, sheet_name="match")
-                    except Exception as e:
-                        logger.error(f"Could not read 'match' sheet in {file_path}: {e}")
-                        continue
-
-                    # Drop NA values just in case
-                    df_match = df_match.dropna(subset=[gisib_id_col, bgt_id_col])
-
-                    total_matches = len(df_match)
-                    unique_gisib = df_match[gisib_id_col].nunique()
-                    unique_bgt = df_match[bgt_id_col].nunique()
-
-                    logger.info(
-                        f"[{asset}] total matches: {total_matches}, unique {gisib_id_col}: {unique_gisib}, unique {bgt_id_col}: {unique_bgt}")
-
-                    if total_matches != unique_gisib:
-                        logger.warning(f"[{asset}] Duplicate {gisib_id_col} values found.")
-                    if total_matches != unique_bgt:
-                        logger.warning(f"[{asset}] Duplicate {bgt_id_col} values found.")
-
-                    # Compare to input size
-                    input_rows = sum(len(df) for df in bucket_dict.values())
-                    if total_matches != input_rows:
-                        logger.warning(
-                            f"[{asset}] Not all objects are covered. Input: {input_rows}, Matched: {total_matches}")
-                    else:
-                        logger.info(f"[{asset}] ✅ All objects are covered.")
-
-
+            # check if the output is correct
             validate_excel_matches(
                 output_dir=output_dir,
-                filtered_auto_buckets=filtered_auto_buckets,
+                asset_all_columns=asset_all_columns,
+                buckets_to_process=buckets_to_process,
+                invalid_type_combinations=invalid_type_combinations,
                 gisib_id_col=global_vars.gisib_id_col,
                 bgt_id_col=global_vars.bgt_id_col
             )
-
-            #         # start writing...
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+            # end

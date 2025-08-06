@@ -128,11 +128,11 @@ def process_and_export_per_asset_mode(
                 pd.concat(match_rows, ignore_index=True).to_excel(writer, sheet_name="match", index=False)
             if add_rows:
                 combined_adds = pd.concat(add_rows, ignore_index=True)
-                combined_adds.to_excel(writer, sheet_name="additions", index=False)
+                combined_adds.to_excel(writer, sheet_name="add", index=False)
                 all_additions[asset] = combined_adds
             if remove_rows:
                 combined_removes = pd.concat(remove_rows, ignore_index=True)
-                combined_removes.to_excel(writer, sheet_name="removes", index=False)
+                combined_removes.to_excel(writer, sheet_name="remove", index=False)
                 all_removals[asset] = combined_removes
 
         logger.info(f"✅ Exported results for '{asset}' to {asset_excel_path}")
