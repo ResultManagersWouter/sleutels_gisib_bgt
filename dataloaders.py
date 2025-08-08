@@ -9,6 +9,7 @@ import fiona
 import logging
 from typing import Optional, Union, List, Tuple,Dict
 from shapely.geometry import Polygon
+from shapely import make_valid
 
 
 logger = logging.getLogger(__name__)
@@ -37,9 +38,8 @@ def _read_bgt_shapes(folder: str, columns: list[str],bbox):
 
     for shp in shapefiles:
         path = os.path.join(folder, shp)
-        gdf = gpd.read_file(path,bbox=bbox).rename(columns={"FysiekVplu": "FysiekVPlu"})
+        gdf = gpd.read_file(path,bbox=bbox)
         gdfs.append(gdf[columns])
-
     return pd.concat(gdfs, ignore_index=True)
 
 
@@ -87,7 +87,15 @@ def read_bgt_shapes(
     """
     gdfs = _read_bgt_shapes(folder=folder, columns=columns,bbox=bbox).loc[lambda df: df.geometry.type == "Polygon"]
     # Set CRS to EPSG:28992
+    print(gdfs.ObjectType.value_counts())
+    print(gdfs.shape)
+    gdfs["geometry"] = gdfs.geometry.apply(make_valid)
+    print(gdfs.shape)
     gdfs = gdfs.set_crs(28992, allow_override=True)
+    print(gdfs.shape)
+    x = gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
+    print(x.shape)
+    print(objecttypes)
     return gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
 
 def read_gisib(
@@ -156,7 +164,7 @@ def read_gisib(
     # Set CRS to EPSG:28992
     gdf = gdf.set_crs(28992, allow_override=True)
 
-    return gdf.assign(geometry=lambda df: df.geometry.buffer(0))
+    return gdf.assign(geometry=lambda df: df.geometry.apply(make_valid).buffer(0))
 
 
 def read_controle_tabel(

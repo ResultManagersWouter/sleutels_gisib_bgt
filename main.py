@@ -54,6 +54,7 @@ if __name__ == "__main__":
         object_col=ObjectType.BGTOBJECTTYPE.value,
         bbox=bbox,
     )
+
     # Load assets
     assets = load_assets(
         bbox=bbox, gebied_col=global_vars.gebied_col, gebied=global_vars.gebied
@@ -66,6 +67,7 @@ if __name__ == "__main__":
         objecttype_col=global_vars.gisib_objecttype_col,
         gpkg_path=f"{global_vars.today}_overlaps_{global_vars.gebied.lower()}.gpkg",
     )
+    # hierin staan de overlappingen geodataframe
     valid = validator.run_all_validations()
 
     # matcher = GroenobjectenMatcher(gisib_gdf = assets["groenobjecten"],
@@ -94,6 +96,8 @@ if __name__ == "__main__":
         buckets_to_process = controller.filtered_buckets(
             bucket_type="manual", automatic_bucket_values=automatic_buckets
         )
+        # check of er nog manuele handelingen nodig zijn, zo nee return False
+        # Als er nog wat moet gebeuren is process_required = True, en gaat die niet verder.
         process_required = should_process_buckets(
             buckets_to_process,
             type_col=global_vars.TYPE_COL_GISIB,
@@ -101,7 +105,7 @@ if __name__ == "__main__":
         )
 
         # I have checked them
-        # process_required = False
+        process_required = False
 
         if not process_required:
             auto_buckets = controller.filtered_buckets(
