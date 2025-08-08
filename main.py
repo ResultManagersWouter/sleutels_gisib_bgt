@@ -78,7 +78,9 @@ if __name__ == "__main__":
     # overlap = matcher.calculate_overlap_df()
 
     # if there is no overlap, continue
+
     if valid.empty:
+    # if True:
         controller = Controller(
             assets=assets,
             bgt=bgt,
