@@ -1,10 +1,12 @@
 from enums import Gebied
 from datetime import date
+# Pas aan
+gebied = 'Zuidoost'
+gebied_col = Gebied.STADSDEEL.value
+
 
 SKIP_TYPES = {"Rietland", "Moeras"}
 TYPE_COL_GISIB= "TYPE"
-gebied = 'Zuidoost'
-gebied_col = Gebied.BUURT.value
 gisib_id_col = "GUID"
 bgt_id_col = "LokaalID"
 gisib_hoogteligging_col = "RELATIEVE_HOOGTELIGGING"

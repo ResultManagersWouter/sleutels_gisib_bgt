@@ -59,7 +59,7 @@ class GisibValidator:
             overlap_2=lambda d: d.geometry.area / d[right_geom_col].area,
         )
         return df[
-            (df["overlap_1"] > self.threshold) | (df["overlap_2"] > self.threshold)
+            (df["overlap_1"] > self.threshold) & (df["overlap_2"] > self.threshold)
         ]
 
     def validate_no_internal_overlap(self):
