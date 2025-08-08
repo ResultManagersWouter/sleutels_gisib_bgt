@@ -1,16 +1,17 @@
 # schema_config.py
 from enums import AssetType
+
 # Define BGT columns once
 # from the controle tabel to BGT
 column_mapping_bgt_controle_tabel = {
-    'BGT Objecttype': 'ObjectType',  # corrected!
-    "Type":"TYPE",
-    "Type gedetailleerd":"TYPE_GEDETAILLEERD",
-    'Objecttype': 'OBJECTTYPE',
-    'BGT Fysiek voorkomen (geonovum)': 'FysiekVoor',
-    'IMGeo Fysiek voorkomen plus (geonovum)': 'FysiekVPlu',
-    'BGT Functie (geonovum)': 'Functie',
-    'IMGeo Functie plus (geonovum)': 'FunctieExt',
+    "BGT Objecttype": "ObjectType",  # corrected!
+    "Type": "TYPE",
+    "Type gedetailleerd": "TYPE_GEDETAILLEERD",
+    "Objecttype": "OBJECTTYPE",
+    "BGT Fysiek voorkomen (geonovum)": "FysiekVoor",
+    "IMGeo Fysiek voorkomen plus (geonovum)": "FysiekVPlu",
+    "BGT Functie (geonovum)": "Functie",
+    "IMGeo Functie plus (geonovum)": "FunctieExt",
 }
 
 BGT_COLUMNS_MERGED = [
@@ -41,13 +42,13 @@ BGT_SHAPE_COLUMNS = [
 
 CONTROLE_TABEL_COLUMNS = [
     "Objecttype",
-    # "Type", #do not match
+    "Type",  # do not match
     # "Type gedetailleerd", # do not match
     "BGT Objecttype",
-    "BGT Fysiek voorkomen (geonovum)",
-    "IMGeo Fysiek voorkomen plus (geonovum)",
-    "BGT Functie (geonovum)",
-    "IMGeo Functie plus (geonovum)",
+    # "BGT Fysiek voorkomen (geonovum)",
+    # "IMGeo Fysiek voorkomen plus (geonovum)",
+    # "BGT Functie (geonovum)",
+    # "IMGeo Functie plus (geonovum)",
 ]
 
 # Define per-asset GISIB columns only
@@ -141,7 +142,7 @@ column_mappings = {
         "verwijderdatum": "VERWIJDERDATUM",
         "gbd_wijk_naam": "WIJK",
         "bag_woonplaats_naam": "WOONPLAATS",
-"geometry":"geometry",
+        "geometry": "geometry",
     },
     AssetType.GROENOBJECTEN: {
         "id": "ID",
@@ -205,7 +206,7 @@ column_mappings = {
         "object_begintijd": "VALID_FROM",
         "object_eindtijd": "VALID_TILL",
         "verwijderdatum": "VERWIJDERDATUM",
-        "geometry":"geometry"
+        "geometry": "geometry",
     },
     AssetType.VERHARDINGEN: {
         "id": "ID",
@@ -258,6 +259,21 @@ column_mappings = {
         "type_rijstrook": "TYPE_RIJSTROOK",
         "waterdoorlatendheid": "WATERDOORLATENDHEID",
         "wegtype_bestaand": "WEGTYPE_BESTAAND",
-"geometry":"geometry"
+        "geometry": "geometry",
     },
 }
+
+
+EXPORT_INVALID_TYPE_COMBINATIONS = [
+    "OP_TALUD",
+    "GUID",
+    "VALID_FROM",
+    "FYSIEK_VOORKOMEN",
+    "BEHEERDER_GEDETAILLEERD",
+    "BUURT",
+    "ONDERHOUDSPLICHTIGE",
+    "OBJECTTYPE",
+    "TYPE",
+    "TYPE_GEDETAILLEERD",
+    "geometry",
+]

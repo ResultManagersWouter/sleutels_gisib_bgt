@@ -10,6 +10,7 @@ from columns_config import (
     BGT_SHAPE_COLUMNS,
     column_mapping_bgt_controle_tabel,
     CONTROLE_TABEL_COLUMNS,
+EXPORT_INVALID_TYPE_COMBINATIONS
 )
 from controller import Controller
 from controller_utils import (
