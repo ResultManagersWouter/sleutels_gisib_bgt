@@ -87,15 +87,8 @@ def read_bgt_shapes(
     """
     gdfs = _read_bgt_shapes(folder=folder, columns=columns,bbox=bbox).loc[lambda df: df.geometry.type == "Polygon"]
     # Set CRS to EPSG:28992
-    print(gdfs.ObjectType.value_counts())
-    print(gdfs.shape)
     gdfs["geometry"] = gdfs.geometry.apply(make_valid)
-    print(gdfs.shape)
     gdfs = gdfs.set_crs(28992, allow_override=True)
-    print(gdfs.shape)
-    x = gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
-    print(x.shape)
-    print(objecttypes)
     return gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
 
 def read_gisib(

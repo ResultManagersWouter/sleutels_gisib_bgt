@@ -81,8 +81,8 @@ if __name__ == "__main__":
 
     # if there is no overlap, continue
 
-    if valid.empty:
-    # if True:
+    # if valid.empty:
+    if True:
         controller = Controller(
             assets=assets,
             bgt=bgt,
@@ -122,7 +122,7 @@ if __name__ == "__main__":
                     verbose=True,
                 )
             )
-        if not invalid_type_combinations:
+        if invalid_type_combinations:
             output_dir = f"output/{global_vars.gebied}_{global_vars.today}".replace(
                 " ", "_"
             )
