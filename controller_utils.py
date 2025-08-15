@@ -39,8 +39,8 @@ def should_process_buckets(
     logger.info("🚧 Buckets to process:")
     for asset_name, bucket_name in buckets_to_process:
         logger.warning(f" - {asset_name} - {bucket_name}")
-import pandas as pd
-import logging
+
+    return True
 
 logger = logging.getLogger(__name__)
 

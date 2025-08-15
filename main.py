@@ -105,7 +105,7 @@ if __name__ == "__main__":
         )
 
         # I have checked them
-        process_required = False
+        # process_required = False
 
         if not process_required:
             auto_buckets = controller.filtered_buckets(
@@ -122,36 +122,36 @@ if __name__ == "__main__":
                     verbose=True,
                 )
             )
-        if invalid_type_combinations:
-            output_dir = f"output/{global_vars.gebied}_{global_vars.today}".replace(
-                " ", "_"
-            )
+            if invalid_type_combinations:
+                output_dir = f"output/{global_vars.gebied}_{global_vars.today}".replace(
+                    " ", "_"
+                )
 
-            # Create the directory
-            os.makedirs(output_dir, exist_ok=True)
-            logger.info(f"Created output directory: {output_dir}")
-            asset_all_columns = load_assets(
-                bbox=bbox,
-                gebied_col=global_vars.gebied_col,
-                gebied=global_vars.gebied,
-                use_schema_columns=False,
-            )
+                # Create the directory
+                os.makedirs(output_dir, exist_ok=True)
+                logger.info(f"Created output directory: {output_dir}")
+                asset_all_columns = load_assets(
+                    bbox=bbox,
+                    gebied_col=global_vars.gebied_col,
+                    gebied=global_vars.gebied,
+                    use_schema_columns=False,
+                )
 
-            process_and_export_per_asset_mode(
-                filtered_auto_buckets=filtered_auto_buckets,
-                gisib_datasets=asset_all_columns,
-                gisib_id_col=global_vars.gisib_id_col,
-                bgt_id_col=global_vars.bgt_id_col,
-                output_dir=output_dir,
-            )
+                process_and_export_per_asset_mode(
+                    filtered_auto_buckets=filtered_auto_buckets,
+                    gisib_datasets=asset_all_columns,
+                    gisib_id_col=global_vars.gisib_id_col,
+                    bgt_id_col=global_vars.bgt_id_col,
+                    output_dir=output_dir,
+                )
 
-            # check if the output is correct
-            validate_excel_matches(
-                output_dir=output_dir,
-                asset_all_columns=asset_all_columns,
-                buckets_to_process=buckets_to_process,
-                invalid_type_combinations=invalid_type_combinations,
-                gisib_id_col=global_vars.gisib_id_col,
-                bgt_id_col=global_vars.bgt_id_col
-            )
+                # check if the output is correct
+                validate_excel_matches(
+                    output_dir=output_dir,
+                    asset_all_columns=asset_all_columns,
+                    buckets_to_process=buckets_to_process,
+                    invalid_type_combinations=invalid_type_combinations,
+                    gisib_id_col=global_vars.gisib_id_col,
+                    bgt_id_col=global_vars.bgt_id_col
+                )
             # end
