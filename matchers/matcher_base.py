@@ -325,6 +325,8 @@ class MatcherBase:
         geom_matches = intersection_df[mask]
         # assert every gisib_id is unique in matches
         if not geom_matches.empty:
+            print(intersection_df.loc[lambda df: df.loc[:,self.gisib_id_col] == "{563B3537-14AF-43A6-963E-1E589DE6F2C0}",self.bgt_id_col])
+            print(geom_matches[self.gisib_id_col].value_counts())
             assert geom_matches[self.gisib_id_col].value_counts().max() == 1
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(geom_matches[self.gisib_id_col].unique())]
 

@@ -119,12 +119,15 @@ def process_and_export_per_asset_mode(
     all_removals = {}
 
     for asset, bucket_dict in filtered_auto_buckets.items():
+        print(asset)
         logger.info(f"Processing asset: {asset}")
         match_rows = []
         add_rows = []
         remove_rows = []
 
         for bucket_enum, df in bucket_dict.items():
+            print(bucket_enum)
+            print(df.shape)
             bucket_label = bucket_enum  # assuming enum.value already used as key
             config = BUCKET_MATCH_CONFIG.get(bucket_label)
 
@@ -139,12 +142,20 @@ def process_and_export_per_asset_mode(
             if mode == "add":
                 result_df, add_df = match_function(df, gisib_id_col, bgt_id_col, gisib_datasets[asset])
                 add_rows.append(add_df)
+                print("add")
+                print(len(add_df))
+                print(result_df.shape)
             elif mode == "remove":
                 result_df, remove_df = match_function(df, gisib_id_col, bgt_id_col)
                 if not remove_df.empty:
                     remove_rows.append(remove_df[[gisib_id_col]])
+                    print("remove")
+                    print(len(remove_df))
+                    print(result_df.shape)
             elif mode == "only":
+                print("only")
                 result_df = match_function(df, gisib_id_col, bgt_id_col)
+                print(result_df.shape)
             else:
                 logger.error(f"Unsupported mode '{mode}' for bucket '{bucket_label}'")
                 continue

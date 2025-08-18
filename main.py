@@ -20,7 +20,7 @@ from controller_utils import (
 from buckets import ALL_AUTOMATIC_BUCKETS
 from bucket_processor import process_and_export_per_asset_mode
 from validate_output import validate_excel_matches
-
+from enums import Gebied
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -29,9 +29,12 @@ logging.basicConfig(
 )
 
 
+gebied = 'Holendrecht-Oost'
+gebied_col = Gebied.BUURT.value
+
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
-    bbox = read_gebied(os.environ.get("FP_GEBIEDEN"), gebied=global_vars.gebied)
+    bbox = read_gebied(os.environ.get("FP_GEBIEDEN"), gebied=gebied)
     # controle tabel
     controle_tabel = read_controle_tabel(
         filepath=os.environ.get("FP_CONTROLE_TABEL"),
@@ -54,10 +57,10 @@ if __name__ == "__main__":
         object_col=ObjectType.BGTOBJECTTYPE.value,
         bbox=bbox,
     )
-
+    breakpoint()
     # Load assets
     assets = load_assets(
-        bbox=bbox, gebied_col=global_vars.gebied_col, gebied=global_vars.gebied
+        bbox=bbox, gebied_col=gebied_col, gebied=gebied
     )
 
     validator = GisibValidator(
@@ -65,7 +68,7 @@ if __name__ == "__main__":
         gisib_id_col=global_vars.gisib_id_col,
         relatieve_hoogteligging_col=global_vars.gisib_hoogteligging_col,
         objecttype_col=global_vars.gisib_objecttype_col,
-        gpkg_path=f"{global_vars.today}_overlaps_{global_vars.gebied.lower()}.gpkg",
+        gpkg_path=f"{global_vars.today}_overlaps_{gebied.lower()}.gpkg",
     )
     # hierin staan de overlappingen geodataframe
     valid = validator.run_all_validations()
@@ -81,8 +84,8 @@ if __name__ == "__main__":
 
     # if there is no overlap, continue
 
-    # if valid.empty:
-    if True:
+    if valid.empty:
+    # if True:
         controller = Controller(
             assets=assets,
             bgt=bgt,
@@ -122,8 +125,8 @@ if __name__ == "__main__":
                     verbose=True,
                 )
             )
-            if invalid_type_combinations:
-                output_dir = f"output/{global_vars.gebied}_{global_vars.today}".replace(
+            if not invalid_type_combinations:
+                output_dir = f"output/{gebied}_{global_vars.today}".replace(
                     " ", "_"
                 )
 
@@ -132,8 +135,8 @@ if __name__ == "__main__":
                 logger.info(f"Created output directory: {output_dir}")
                 asset_all_columns = load_assets(
                     bbox=bbox,
-                    gebied_col=global_vars.gebied_col,
-                    gebied=global_vars.gebied,
+                    gebied_col=gebied_col,
+                    gebied=gebied,
                     use_schema_columns=False,
                 )
 

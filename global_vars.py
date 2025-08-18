@@ -1,8 +1,7 @@
-from enums import Gebied
+
 from datetime import date
 # Pas aan
-gebied = 'Holendrecht-Oost'
-gebied_col = Gebied.BUURT.value
+
 
 
 SKIP_TYPES = {"Rietland", "Moeras"}

@@ -7,9 +7,9 @@ import os
 
 logger = logging.getLogger(__name__)
 ASSET_MATCHER_CLASSES = {
-    AssetType.VERHARDINGEN: VerhardingenMatcher,
-    AssetType.GROENOBJECTEN: GroenobjectenMatcher,
     AssetType.TERREINDEEL: TerreindelenMatcher,
+    AssetType.GROENOBJECTEN: GroenobjectenMatcher,
+    AssetType.VERHARDINGEN: VerhardingenMatcher,
 }
 
 

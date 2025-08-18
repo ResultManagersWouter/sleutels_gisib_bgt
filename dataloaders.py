@@ -43,54 +43,79 @@ def _read_bgt_shapes(folder: str, columns: list[str],bbox):
     return pd.concat(gdfs, ignore_index=True)
 
 
+
 def read_bgt_shapes(
-    folder: str, columns: List[str], objecttypes: List[str], object_col: str,bbox
+    folder: str,
+    columns: List[str],
+    objecttypes: List[str],
+    object_col: str,
+    bbox: Optional[Tuple[float, float, float, float]] = None,
 ) -> gpd.GeoDataFrame:
     """
-    Reads shapefiles from a specified folder and returns a concatenated GeoDataFrame containing only the specified columns.
+    Reads shapefiles from a folder and returns a GeoDataFrame filtered to specific BGT object types.
 
-    Parameters:
+    Parameters
     ----------
     folder : str
-        The path to the folder containing shapefiles (.shp files).
+        Path to the folder with .shp files.
     columns : List[str]
-        A list of column names to retain from each shapefile.
+        Columns to keep (must include `object_col` and geometry).
     objecttypes : List[str]
-        A list of BGT object types to filter for. Only the following values are allowed, as defined in the ControleTabelBGT enum:
+        BGT object types to keep. Must be a subset of ALLOWED_BGT_OBJECTTYPES.
+    object_col : str
+        Name of the column that stores the BGT object type.
+    bbox : Optional[Tuple[float, float, float, float]]
+        Optional bounding box (minx, miny, maxx, maxy) to spatially clip/filter reads.
 
-            - 'Wegdeel'
-            - 'Ondersteunend wegdeel'
-            - 'Begroeid terreindeel'
-            - 'Onbegroeid terreindeel'
-            - 'Ondersteunend waterdeel'
-            - 'Vegetatieobject'
-            - 'Weginrichtingselement'
-
-        These object types correspond to three high-level groups used in validation:
-        - Groenobject
-        - Terreindeel
-        - Verhardingsobject
-
-        **Note:** Filtering based on these types must be implemented within the function; currently, this parameter is accepted but not applied.
-
-    Returns:
+    Returns
     -------
     gpd.GeoDataFrame
-        A single GeoDataFrame containing the specified columns from all shapefiles in the folder.
+        Filtered GeoDataFrame in EPSG:28992 with polygonal geometries only.
 
-    Notes:
+    Notes
     -----
-    - Only files ending in `.shp` are processed.
-    - Assumes all shapefiles contain the requested columns.
-    - Assumes uniform schema and compatible CRS across shapefiles.
-    - `objecttypes` filtering is declared but not currently active in the function logic.
+    - Only files ending in `.shp` are processed by the private helper `_read_bgt_shapes`.
+    - Assumes uniform schema across shapefiles.
     """
-    gdfs = _read_bgt_shapes(folder=folder, columns=columns,bbox=bbox).loc[lambda df: df.geometry.type == "Polygon"]
-    # Set CRS to EPSG:28992
-    gdfs["geometry"] = gdfs.geometry.apply(make_valid)
-    gdfs = gdfs.set_crs(28992, allow_override=True)
-    return gdfs.loc[lambda df: df.loc[:, object_col].isin(objecttypes)]
 
+    # Read (expects helper to select `columns` and optionally apply bbox)
+    gdf = _read_bgt_shapes(folder=folder, columns=columns, bbox=bbox)
+
+    # Validate requested object types up-front
+    ALLOWED_BGT_OBJECTTYPES = set(gdf.loc[:,object_col].unique())
+    invalid_requested = set(objecttypes) - ALLOWED_BGT_OBJECTTYPES
+    if invalid_requested:
+        raise Warning(
+            f"Not in BGT Folder while allowed: {sorted(invalid_requested)}. "
+        )
+
+    # Ensure required column exists
+    if object_col not in gdf.columns:
+        raise KeyError(f"`object_col` '{object_col}' not found in columns: {list(gdf.columns)}")
+
+    # Make geometries valid
+    gdf["geometry"] = gdf.geometry.apply(make_valid)
+
+    # Keep only polygonal geometries (Polygon or MultiPolygon)
+    gdf = gdf.loc[gdf.geometry.geom_type.isin(["Polygon", "MultiPolygon"])]
+
+    # CRS: set or convert to EPSG:28992
+    if gdf.crs is None:
+        gdf = gdf.set_crs(28992, allow_override=True)
+    elif gdf.crs.to_epsg() != 28992:
+        gdf = gdf.to_crs(28992)
+
+    # Check which of the requested types are actually present
+    present_types = set(gdf[object_col].dropna().unique().tolist())
+    missing = set(objecttypes) - present_types
+    if missing:
+        raise ValueError(
+            "Some requested objecttypes are not present in the data: "
+            f"{sorted(missing)}. Present types: {sorted(present_types)}"
+        )
+
+    # Filter and return
+    return gdf.loc[gdf[object_col].isin(objecttypes)].copy()
 def read_gisib(
     fp_gisib: str,
     layer: Optional[Union[str, 'AssetType']] = None,
