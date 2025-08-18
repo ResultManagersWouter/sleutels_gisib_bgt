@@ -12,6 +12,7 @@ __pycache__/
 *.zip
 *.gpkg-shm
 *.gpkg-wal
+*.csv
 output/
 notebooks/
 data/
