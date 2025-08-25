@@ -14,7 +14,6 @@ from shapely import make_valid
 
 logger = logging.getLogger(__name__)
 
-
 def _read_bgt_shapes(folder: str, columns: list[str],bbox):
     """
     Reads shapefiles from a given folder and returns a GeoDataFrame containing specified columns.
@@ -85,7 +84,7 @@ def read_bgt_shapes(
     ALLOWED_BGT_OBJECTTYPES = set(gdf.loc[:,object_col].unique())
     invalid_requested = set(objecttypes) - ALLOWED_BGT_OBJECTTYPES
     if invalid_requested:
-        raise Warning(
+        logger.warning(
             f"Not in BGT Folder while allowed: {sorted(invalid_requested)}. "
         )
 
@@ -109,7 +108,7 @@ def read_bgt_shapes(
     present_types = set(gdf[object_col].dropna().unique().tolist())
     missing = set(objecttypes) - present_types
     if missing:
-        raise ValueError(
+        logger.warning(
             "Some requested objecttypes are not present in the data: "
             f"{sorted(missing)}. Present types: {sorted(present_types)}"
         )

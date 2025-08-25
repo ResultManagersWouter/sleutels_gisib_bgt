@@ -29,8 +29,8 @@ logging.basicConfig(
 )
 
 
-gebied = 'Holendrecht-Oost'
-gebied_col = Gebied.BUURT.value
+gebied = 'Zuidoost'
+gebied_col = Gebied.STADSDEEL.value
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
@@ -57,7 +57,6 @@ if __name__ == "__main__":
         object_col=ObjectType.BGTOBJECTTYPE.value,
         bbox=bbox,
     )
-    breakpoint()
     # Load assets
     assets = load_assets(
         bbox=bbox, gebied_col=gebied_col, gebied=gebied

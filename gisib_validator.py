@@ -272,7 +272,7 @@ class GisibValidator:
             result.loc[
                 (result.overlap_1 > self.threshold)
                 | (result.overlap_2 > self.threshold)
-            ]
+                ]
             .assign(
                 **{
                     f"{self.relatieve_hoogteligging_col}_2": lambda d: d[
@@ -289,6 +289,21 @@ class GisibValidator:
                     f"{self.relatieve_hoogteligging_col}_2": 0,
                 }
             )
+            # 🔑 ensure integer comparison
+            .assign(
+                **{
+                    f"{self.relatieve_hoogteligging_col}_1": lambda d: d[
+                        f"{self.relatieve_hoogteligging_col}_1"
+                    ].astype(int),
+                    f"{self.relatieve_hoogteligging_col}_2": lambda d: d[
+                        f"{self.relatieve_hoogteligging_col}_2"
+                    ].astype(int),
+                }
+            )
+            .loc[
+                lambda d: d[f"{self.relatieve_hoogteligging_col}_1"]
+                          == d[f"{self.relatieve_hoogteligging_col}_2"]
+            ]
             .assign(
                 objecttypes=lambda d: d.apply(
                     lambda row: "_".join(
@@ -322,7 +337,6 @@ class GisibValidator:
                 ),
             )
         )
-        print(overlaps.shape)
 
         if not overlaps.empty:
             print(
