@@ -162,11 +162,10 @@ def read_gisib(
     # Determine casing and mapping
     first_column = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", rows=1).columns[0]
     mapper = column_mappings.get(layer, {})
-
-    if first_column == "id":
+    if first_column.islower():
         gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns, bbox=bbox)
         gdf = gdf.rename(columns=mapper)
-    elif first_column == "ID":
+    elif first_column.isupper():
         mapped_columns = [mapper.get(col) for col in columns] if columns else None
         gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns, bbox=bbox)
 
