@@ -287,13 +287,6 @@ class MatcherBase:
         bgt_gisib = self.build_bgt_gisib_grouped(intersection_df)
         guids_to_merge = self._select_1_bgt_to_n_gisib_overlap5_merge(bgt_gisib)
         guids_to_split = self._select_1_bgt_to_n_gisib_overlap5_split(bgt_gisib) - guids_to_merge
-        print("-------------------guid to merge------------------------")
-        print("{13030499-AF36-4D9C-8FE4-BD2A41E37EFA}" in guids_to_merge)
-        print("-------------------------------------------")
-        print("------------------guid to split-------------------------")
-        print("{13030499-AF36-4D9C-8FE4-BD2A41E37EFA}" in guids_to_split)
-        print("-------------------------------------------")
-
         bucket_merge = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_merge)]
         bucket_split = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_split)]
         remaining = intersection_df[
@@ -311,9 +304,6 @@ class MatcherBase:
         mask = (gisib_bgt["overlap_bgt10"]) & (gisib_bgt["overlap_gisib10"]) & (gisib_bgt["lokaalid_count"] > 1)
         guids_to_split = set(gisib_bgt.loc[mask, self.gisib_id_col])
         bucket_split = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_split)]
-        print("------------------SPLIT GISIB-------------------------")
-        print("{13030499-AF36-4D9C-8FE4-BD2A41E37EFA}" in guids_to_split)
-        print("-------------------------------------------")
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(guids_to_split)]
         return bucket_split, remaining
 
@@ -325,8 +315,6 @@ class MatcherBase:
         geom_matches = intersection_df[mask]
         # assert every gisib_id is unique in matches
         if not geom_matches.empty:
-            print(intersection_df.loc[lambda df: df.loc[:,self.gisib_id_col] == "{563B3537-14AF-43A6-963E-1E589DE6F2C0}",self.bgt_id_col])
-            print(geom_matches[self.gisib_id_col].value_counts())
             assert geom_matches[self.gisib_id_col].value_counts().max() == 1
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(geom_matches[self.gisib_id_col].unique())]
 

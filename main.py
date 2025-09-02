@@ -20,7 +20,7 @@ from controller_utils import (
 from buckets import ALL_AUTOMATIC_BUCKETS
 from bucket_processor import process_and_export_per_asset_mode
 from validate_output import validate_excel_matches
-from enums import Gebied
+from gebieden import gebieden
 logger = logging.getLogger(__name__)
 
 load_dotenv()
@@ -30,7 +30,9 @@ logging.basicConfig(
 
 
 gebied = 'Zuidoost'
-gebied_col = Gebied.STADSDEEL.value
+assert gebied in gebieden.keys()
+gebied_col = gebieden[gebied]
+write_manual_buckets = True
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
@@ -83,7 +85,7 @@ if __name__ == "__main__":
 
     # if there is no overlap, continue
 
-    if valid.empty:
+    if valid.empty or write_manual_buckets:
     # if True:
         controller = Controller(
             assets=assets,
@@ -108,6 +110,9 @@ if __name__ == "__main__":
 
         # I have checked them
         # process_required = False
+        if write_manual_buckets:
+            controller.write_manual_buckets_to_geopackages(suffix="manual", directory="b",
+                                                       automatic_bucket_values=automatic_buckets)
 
         if not process_required:
             auto_buckets = controller.filtered_buckets(

@@ -20,5 +20,4 @@ class GroenobjectenMatcher(MatcherBase):
         filtered = self.filter_overlap_min_ratio(overlay)
         filtered_hagen = filter_hagen(intersection_df=filtered)
         with_counts = self.add_intersection_counts(filtered_hagen)
-        print(with_counts.loc[lambda df: df.GUID == "{AFD535EA-EBED-4761-8D7F-188E208A65A2}"])
         return self.get_perfect_rel_matches(with_counts)
