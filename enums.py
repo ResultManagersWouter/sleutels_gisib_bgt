@@ -4,7 +4,6 @@ class AssetType(Enum):
     TERREINDEEL = "terreindeel"
     GROENOBJECTEN = "groenobjecten"
     VERHARDINGEN = "verhardingen"
-df = pd.read_csv("gebieden_naam.csv")
 
 class ControleTabelGisib(Enum):
     VERHARDINGSOBJECT = 'Verhardingsobject'
