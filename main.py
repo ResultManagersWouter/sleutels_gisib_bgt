@@ -33,7 +33,7 @@ gebied = 'Zuidoost'
 assert gebied in gebieden.keys()
 gebied_col = gebieden[gebied]
 write_manual_buckets = True
-print("test")
+
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
     bbox = read_gebied(os.environ.get("FP_GEBIEDEN"), gebied=gebied)
