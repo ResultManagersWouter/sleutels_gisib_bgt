@@ -29,10 +29,10 @@ logging.basicConfig(
 )
 
 
-gebied = 'Zuidoost'
+gebied = 'Centrum'
 assert gebied in gebieden.keys()
 gebied_col = gebieden[gebied]
-write_manual_buckets = True
+write_manual_buckets = False
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         gpkg_path=f"{global_vars.today}_overlaps_{gebied.lower()}.gpkg",
     )
     # hierin staan de overlappingen geodataframe
-    valid = validator.run_all_validations()
+    overlaps_gisib = validator.run_all_validations()
 
     # matcher = GroenobjectenMatcher(gisib_gdf = assets["groenobjecten"],
     #                       bgt_gdf = bgt,
@@ -85,7 +85,7 @@ if __name__ == "__main__":
 
     # if there is no overlap, continue
 
-    if valid.empty or write_manual_buckets:
+    if overlaps_gisib.empty or write_manual_buckets:
     # if True:
         controller = Controller(
             assets=assets,
