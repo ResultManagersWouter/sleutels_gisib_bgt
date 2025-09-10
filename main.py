@@ -31,14 +31,14 @@ logging.basicConfig(
 today = date.today().strftime("%d%m%Y")
 
 input_gebieden = ['Zuidoost',"Weesp"]
-
+# WARNING: Make sure BGT has the same data as gisib.
 assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
 # check of alle gebieden voorkomen in hetzelfde attribuut:
 # zijn alle gebieden of allemaal stadsdelen, of allemaal buurten.
 assert len(set([gebieden[gebied] for gebied in input_gebieden])) == 1
 gebied_col = gebieden[input_gebieden[0]]
 # negate = False, dus het is intersect.negate=True alles behalve intersect
-negate = True
+negate = False
 write_manual_buckets = False
 
 # Press the green button in the gutter to run the script.
