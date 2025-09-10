@@ -22,15 +22,13 @@ from buckets import ALL_AUTOMATIC_BUCKETS
 from bucket_processor import process_and_export_per_asset_mode
 from validate_output import validate_excel_matches
 from gebieden import gebieden
-logger = logging.getLogger(__name__)
 
-load_dotenv()
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
-)
-today = date.today().strftime("%d%m%Y")
-
+# user input:
 input_gebieden = ['Zuidoost',"Weesp"]
+negate = False
+write_manual_buckets = False
+
+
 # WARNING: Make sure BGT has the same data as gisib.
 assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
 # check of alle gebieden voorkomen in hetzelfde attribuut:
@@ -38,8 +36,15 @@ assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebi
 assert len(set([gebieden[gebied] for gebied in input_gebieden])) == 1
 gebied_col = gebieden[input_gebieden[0]]
 # negate = False, dus het is intersect.negate=True alles behalve intersect
-negate = False
-write_manual_buckets = False
+
+
+logger = logging.getLogger(__name__)
+
+load_dotenv()
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
+)
+today = date.today().strftime("%d%m%Y")
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
