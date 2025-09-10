@@ -25,6 +25,8 @@ from gebieden import gebieden
 
 # user input:
 input_gebieden = ['Zuidoost',"Weesp"]
+# negate = False = intersection met de input gebieden
+# negate = True = alles behalve de intersection met input gebieden
 negate = False
 write_manual_buckets = False
 
