@@ -14,7 +14,7 @@ from shapely import make_valid
 
 logger = logging.getLogger(__name__)
 
-def _read_bgt_shapes(folder: str, columns: list[str],bbox):
+def _read_bgt_shapes(folder: str, columns: list[str],filter_polygon,negate: bool = False):
     """
     Reads shapefiles from a given folder and returns a GeoDataFrame containing specified columns.
 
@@ -37,7 +37,11 @@ def _read_bgt_shapes(folder: str, columns: list[str],bbox):
 
     for shp in shapefiles:
         path = os.path.join(folder, shp)
-        gdf = gpd.read_file(path,bbox=bbox)
+        gdf = gpd.read_file(path)
+        mask = gdf.geometry.intersects(filter_polygon)
+        if negate:
+            mask = ~mask
+        gdf = gdf[mask]
         gdfs.append(gdf[columns])
     return pd.concat(gdfs, ignore_index=True)
 
@@ -48,7 +52,8 @@ def read_bgt_shapes(
     columns: List[str],
     objecttypes: List[str],
     object_col: str,
-    bbox: Optional[Tuple[float, float, float, float]] = None,
+    filter_polygon: Polygon= None,
+    negate : bool = False,
 ) -> gpd.GeoDataFrame:
     """
     Reads shapefiles from a folder and returns a GeoDataFrame filtered to specific BGT object types.
@@ -78,7 +83,7 @@ def read_bgt_shapes(
     """
 
     # Read (expects helper to select `columns` and optionally apply bbox)
-    gdf = _read_bgt_shapes(folder=folder, columns=columns, bbox=bbox)
+    gdf = _read_bgt_shapes(folder=folder, columns=columns, filter_polygon=filter_polygon,negate=negate)
 
     # Validate requested object types up-front
     ALLOWED_BGT_OBJECTTYPES = set(gdf.loc[:,object_col].unique())
@@ -119,9 +124,10 @@ def read_gisib(
     fp_gisib: str,
     layer: Optional[Union[str, 'AssetType']] = None,
     columns: Optional[List[str]] = None,
-    bbox: Optional[Union[Tuple[float, float, float, float], Polygon]] = None,
+    filter_polygon: Optional[Union[Tuple[float, float, float, float], Polygon]] = None,
     filter_column: Optional[str] = None,
     filter_value: Optional[Union[str, float, int]] = None,
+    negate : bool = str,
 ) -> gpd.GeoDataFrame:
     """
     Reads a GISIB dataset layer using pyogrio and returns a cleaned GeoDataFrame.
@@ -153,29 +159,29 @@ def read_gisib(
     else:
         layer_name = layer
 
-    # Convert Polygon to bounding box for fast read
-    filter_polygon = None
-    if isinstance(bbox, Polygon):
-        filter_polygon = bbox
-        bbox = bbox.bounds
-
     # Determine casing and mapping
     first_column = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", rows=1).columns[0]
     mapper = column_mappings.get(layer, {})
     if first_column.islower():
-        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns, bbox=bbox)
+        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns)
         gdf = gdf.rename(columns=mapper)
     elif first_column.isupper():
         mapped_columns = [mapper.get(col) for col in columns] if columns else None
-        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns, bbox=bbox)
+        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns)
 
     # Geometry filter
     if filter_polygon is not None:
-        gdf = gdf[gdf.geometry.intersects(filter_polygon)]
+        mask = gdf.geometry.intersects(filter_polygon)
+        if negate:
+            mask = ~mask
+        gdf = gdf[mask]
 
     # Column filter: keep rows where column == value OR is null
     if filter_column is not None and filter_value is not None:
-        gdf = gdf[(gdf[filter_column] == filter_value) | (gdf[filter_column].isna())]
+        mask = gdf[filter_column].isin(filter_value)
+        if negate:
+            mask = ~mask
+        gdf = gdf[((mask) | (gdf[filter_column].isna()))]
 
     # Set CRS to EPSG:28992
     gdf = gdf.set_crs(28992, allow_override=True)
@@ -223,7 +229,7 @@ def read_controle_tabel(
     ].rename(columns=mapping)
     return df
 
-def read_gebied(filepath: str, gebied: str) -> Tuple[float, float, float, float]:
+def read_gebied(filepath: str, gebieden: list[str]) -> Tuple[float, float, float, float]:
     """
     Reads a GeoDataFrame from the specified file and extracts the bounding box
     for features that match the given 'gebied' value.
@@ -240,24 +246,25 @@ def read_gebied(filepath: str, gebied: str) -> Tuple[float, float, float, float]
     """
     gdf = gpd.read_file(filepath)
 
-    if gebied not in gdf.naam.to_list():
-        raise ValueError("'gebied' column not found in the file.")
-
-    selection = gdf[gdf["naam"] == gebied]
-
+    for g in gebieden:
+        if g not in gdf.naam.to_list():
+            raise ValueError(f"'{g}' column not found in the file.")
+    mask = gdf["naam"].isin(gebieden)
+    selection = gdf[mask]
     if selection.empty:
         logging.info(gdf.naam.unique())
-        raise ValueError(f"No features found with naam = '{gebied}'")
+        raise ValueError(f"No features found with naam = '{gebieden}'")
 
 
     return selection.geometry.unary_union
 
 
 def load_assets(
-    bbox: Optional[tuple] = None,
+    filter_polygon: Optional[tuple] = None,
     gebied_col: str = "gebied",
-    gebied: Optional[str] = None,
-    use_schema_columns: bool = True
+    gebieden: Optional[str] = None,
+    use_schema_columns: bool = True,
+    negate : bool = False,
 ) -> Dict[str, gpd.GeoDataFrame]:
     """
     Load all GISIB asset layers filtered by bbox and gebied.
@@ -276,25 +283,28 @@ def load_assets(
             fp_gisib=os.environ.get("FP_TRD"),
             columns=ASSET_SCHEMAS[AssetType.TERREINDEEL] if use_schema_columns else None,
             layer=AssetType.TERREINDEEL,
-            bbox=bbox,
+            filter_polygon=filter_polygon,
             filter_column=gebied_col,
-            filter_value=gebied,
+            filter_value=gebieden,
+            negate=negate,
         ),
         AssetType.GROENOBJECTEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_GRN"),
             columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN] if use_schema_columns else None,
             layer=AssetType.GROENOBJECTEN,
-            bbox=bbox,
+            filter_polygon=filter_polygon,
             filter_column=gebied_col,
-            filter_value=gebied,
+            filter_value=gebieden,
+            negate=negate,
         ),
         AssetType.VERHARDINGEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_VRH"),
             columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN] if use_schema_columns else None,
             layer=AssetType.VERHARDINGEN,
-            bbox=bbox,
+            filter_polygon=filter_polygon,
             filter_column=gebied_col,
-            filter_value=gebied,
+            filter_value=gebieden,
+            negate=negate,
         ),
     }
 

@@ -1,6 +1,7 @@
 # This is a sample Python script.
 import os
 import logging
+from datetime import date
 from dataloaders import load_assets, read_bgt_shapes, read_controle_tabel, read_gebied
 from dotenv import load_dotenv
 from gisib_validator import GisibValidator
@@ -27,16 +28,23 @@ load_dotenv()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
 )
+today = date.today().strftime("%d%m%Y")
 
+input_gebieden = ['Zuidoost',"Weesp"]
 
-gebied = 'Centrum'
-assert gebied in gebieden.keys()
-gebied_col = gebieden[gebied]
+assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
+# check of alle gebieden voorkomen in hetzelfde attribuut:
+# zijn alle gebieden of allemaal stadsdelen, of allemaal buurten.
+assert len(set([gebieden[gebied] for gebied in input_gebieden])) == 1
+gebied_col = gebieden[input_gebieden[0]]
+# negate = False, dus het is intersect.negate=True alles behalve intersect
+negate = True
 write_manual_buckets = False
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
-    bbox = read_gebied(os.environ.get("FP_GEBIEDEN"), gebied=gebied)
+    # deze wil je niet kunnen inverse/ontkennen dit wil je alleen bij de objecten doen.
+    filter_polygon = read_gebied(os.environ.get("FP_GEBIEDEN"), gebieden=input_gebieden)
     # controle tabel
     controle_tabel = read_controle_tabel(
         filepath=os.environ.get("FP_CONTROLE_TABEL"),
@@ -57,11 +65,12 @@ if __name__ == "__main__":
         columns=BGT_SHAPE_COLUMNS,
         objecttypes=objecttypes_bgt,
         object_col=ObjectType.BGTOBJECTTYPE.value,
-        bbox=bbox,
+        filter_polygon=filter_polygon,
+        negate = negate
     )
     # Load assets
     assets = load_assets(
-        bbox=bbox, gebied_col=gebied_col, gebied=gebied
+        filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden,negate=negate
     )
 
     validator = GisibValidator(
@@ -69,7 +78,7 @@ if __name__ == "__main__":
         gisib_id_col=global_vars.gisib_id_col,
         relatieve_hoogteligging_col=global_vars.gisib_hoogteligging_col,
         objecttype_col=global_vars.gisib_objecttype_col,
-        gpkg_path=f"{global_vars.today}_overlaps_{gebied.lower()}.gpkg",
+        gpkg_path=f"{global_vars.today}_overlaps_{'_'.join(input_gebieden).lower()}.gpkg",
     )
     # hierin staan de overlappingen geodataframe
     overlaps_gisib = validator.run_all_validations()
@@ -110,9 +119,11 @@ if __name__ == "__main__":
 
         # I have checked them
         # process_required = False
-        if write_manual_buckets:
-            controller.write_manual_buckets_to_geopackages(suffix="manual", directory="b",
-                                                       automatic_bucket_values=automatic_buckets)
+
+        # hier schrijf je de buckets automatisch weg die manueel beoordeeld moeten worden?
+        # if write_manual_buckets:
+        #     controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"f{today}_{gebied}",
+        #                                                automatic_bucket_values=automatic_buckets)
 
         if not process_required:
             auto_buckets = controller.filtered_buckets(
