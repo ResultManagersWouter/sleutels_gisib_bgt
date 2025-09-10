@@ -24,10 +24,21 @@ from validate_output import validate_excel_matches
 from gebieden import gebieden
 
 # user input:
-input_gebieden = ['Zuidoost',"Weesp"]
+input_gebieden = [
+    'Centrum',
+ 'Nieuw-West',
+ 'Noord',
+ 'Oost',
+ 'Weesp',
+ 'West',
+ 'Westpoort',
+ 'Zuid',
+ 'Zuidoost'
+]
+
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
-negate = False
+negate = True
 write_manual_buckets = False
 
 
