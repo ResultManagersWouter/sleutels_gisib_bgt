@@ -25,20 +25,20 @@ from gebieden import gebieden
 
 # user input:
 input_gebieden = [
-    'Centrum',
- 'Nieuw-West',
- 'Noord',
- 'Oost',
- 'Weesp',
- 'West',
- 'Westpoort',
- 'Zuid',
+ #    'Centrum',
+ # 'Nieuw-West',
+ # 'Noord',
+ # 'Oost',
+ # 'Weesp',
+ # 'West',
+ # 'Westpoort',
+ # 'Zuid',
  'Zuidoost'
 ]
 
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
-negate = True
+negate = False
 write_manual_buckets = False
 
 
