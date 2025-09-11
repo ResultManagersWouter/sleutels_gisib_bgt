@@ -159,23 +159,21 @@ if __name__ == "__main__":
                 )
             )
             if not invalid_type_combinations:
-                output_dir = f"output/{gebied}_{global_vars.today}".replace(
+                output_dir = f"output/{'_'.join()}_{global_vars.today}".replace(
                     " ", "_"
                 )
 
                 # Create the directory
                 os.makedirs(output_dir, exist_ok=True)
                 logger.info(f"Created output directory: {output_dir}")
-                asset_all_columns = load_assets(
-                    bbox=bbox,
-                    gebied_col=gebied_col,
-                    gebied=gebied,
-                    use_schema_columns=False,
+                # Load assets
+                assets_all_columns = load_assets(
+                    filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden, negate=negate,use_schema_columns=False
                 )
 
                 process_and_export_per_asset_mode(
                     filtered_auto_buckets=filtered_auto_buckets,
-                    gisib_datasets=asset_all_columns,
+                    gisib_datasets=assets_all_columns,
                     gisib_id_col=global_vars.gisib_id_col,
                     bgt_id_col=global_vars.bgt_id_col,
                     output_dir=output_dir,
@@ -184,7 +182,7 @@ if __name__ == "__main__":
                 # check if the output is correct
                 validate_excel_matches(
                     output_dir=output_dir,
-                    asset_all_columns=asset_all_columns,
+                    asset_all_columns=assets_all_columns,
                     buckets_to_process=buckets_to_process,
                     invalid_type_combinations=invalid_type_combinations,
                     gisib_id_col=global_vars.gisib_id_col,
