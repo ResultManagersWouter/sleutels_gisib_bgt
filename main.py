@@ -41,7 +41,6 @@ input_gebieden = [
 negate = False
 write_manual_buckets = False
 
-
 # WARNING: Make sure BGT has the same data as gisib.
 assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
 # check of alle gebieden voorkomen in hetzelfde attribuut:
@@ -57,7 +56,6 @@ load_dotenv()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s"
 )
-today = date.today().strftime("%d%m%Y")
 
 # Press the green button in the gutter to run the script.
 if __name__ == "__main__":
