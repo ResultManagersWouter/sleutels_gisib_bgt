@@ -39,7 +39,7 @@ input_gebieden = [
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
-write_manual_buckets = False
+write_manual_buckets = True
 
 # WARNING: Make sure BGT has the same data as gisib.
 assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
@@ -137,9 +137,9 @@ if __name__ == "__main__":
         # process_required = False
 
         # hier schrijf je de buckets automatisch weg die manueel beoordeeld moeten worden?
-        # if write_manual_buckets:
-        #     controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"f{today}_{gebied}",
-        #                                                automatic_bucket_values=automatic_buckets)
+        if write_manual_buckets:
+            controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"f{global_vars.today}_{'_'.join(input_gebieden).lower()}",
+                                                       automatic_bucket_values=automatic_buckets)
 
         if not process_required:
             auto_buckets = controller.filtered_buckets(
