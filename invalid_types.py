@@ -59,8 +59,6 @@ def write_invalid_types_to_geodataframe(
         raise KeyError(f"'{bgt_id_column}' not found in BGT")
 
     bgt_invalid = bgt.loc[lambda df: df.loc[:, bgt_id_column].isin(list(lokaalids_set))].copy()
-    print(bgt_invalid.shape)
-    print(invalid_gisib_.shape)
 
     intersection = invalid_gisib_.overlay(bgt_invalid, how="intersection", keep_geom_type=True).loc[lambda df: df.geometry.area > 1]
 
