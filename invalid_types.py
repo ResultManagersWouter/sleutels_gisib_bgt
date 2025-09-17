@@ -32,6 +32,8 @@ def write_invalid_types_to_geodataframe(
     guid_set = {r["guid"] for r in invalid_type_combinations if "guid" in r}
     lokaalids_set = {r["lokaalid"] for r in invalid_type_combinations if "lokaalid" in r}
 
+    print(len(guid_set))
+    print(len(lokaalids_set))
     if not guid_set:
         warnings.warn("No GUIDs found; assets result will be empty.")
     if not lokaalids_set:
