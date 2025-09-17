@@ -1,12 +1,15 @@
+import os
 from typing import Dict, List, Tuple, Optional
 import warnings
 import geopandas as gpd
 import pandas as pd
 
+
 def write_invalid_types_to_geodataframe(
     assets: Dict[str, gpd.GeoDataFrame],
     bgt: gpd.GeoDataFrame,
     invalid_type_combinations: List[dict],
+    *,
     gisib_id_column: str,
     bgt_id_column: str,
     skip_types: Optional[List[str]] = None,
@@ -19,9 +22,13 @@ def write_invalid_types_to_geodataframe(
     Filter:
       - assets by GUIDs from 'guid'
       - bgt by lokaal IDs from 'lokaalid'
+
+    If output_path is provided:
+      - writes assets to layer `gisib_layer`
+      - writes bgt to layer `bgt_layer`
     """
 
-    # ---- Collect GUIDs and lokaalids into sets (fast lookup, no duplicates) ----
+    # ---- Collect GUIDs and lokaalids ----
     guid_set = {r["guid"] for r in invalid_type_combinations if "guid" in r}
     lokaalids_set = {r["lokaalid"] for r in invalid_type_combinations if "lokaalid" in r}
 
@@ -66,8 +73,9 @@ def write_invalid_types_to_geodataframe(
 
     bgt_invalid = bgt[bgt[bgt_id_column].isin(lokaalids_set)].copy()
 
-    # ---- Optional: write both layers ----
+    # ---- Write both layers ----
     if output_path:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         assets_invalid.to_file(output_path, layer=gisib_layer, driver="GPKG")
         bgt_invalid.to_file(output_path, layer=bgt_layer, driver="GPKG")
 
