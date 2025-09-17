@@ -16,7 +16,7 @@ def write_invalid_types_to_geodataframe(
     output_path: Optional[str] = None,
     gisib_layer: str = "gisib",
     bgt_layer: str = "bgt",
-) -> Tuple[gpd.GeoDataFrame, gpd.GeoDataFrame]:
+) -> gpd.GeoDataFrame:
     """
     Filter:
       - assets by GUIDs from 'guid'

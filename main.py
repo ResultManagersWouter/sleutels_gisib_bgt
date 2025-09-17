@@ -168,7 +168,7 @@ if __name__ == "__main__":
 
             )
             if write_invalid_types:
-                assets_invalid_gdf, bgt_invalid_gdf = write_invalid_types_to_geodataframe(
+                invalid_types = write_invalid_types_to_geodataframe(
                     assets=assets,  # {'verhardingen': gdf1, 'groenobjecten': gdf2, ...}
                     bgt=bgt,
                     invalid_type_combinations=invalid_type_combinations,
