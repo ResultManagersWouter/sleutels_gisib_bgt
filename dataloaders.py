@@ -296,7 +296,7 @@ def load_assets(
             filter_column=gebied_col,
             filter_value=gebieden,
             negate=negate,
-        ),
+        ).loc[lambda df: df.GUID != "{D076883D-3EAB-4BDB-AF0D-9CDC6F6E5E07}"],
         AssetType.VERHARDINGEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_VRH"),
             columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN] if use_schema_columns else None,

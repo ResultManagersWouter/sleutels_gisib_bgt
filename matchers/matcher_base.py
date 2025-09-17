@@ -321,7 +321,7 @@ class MatcherBase:
         #   # vul zelf de guid even in.
             # print(geom_matches[self.gisib_id_col].value_counts())
             # print(intersection_df.loc[lambda df: df.loc[:,"GUID"].isin(["{D076883D-3EAB-4BDB-AF0D-9CDC6F6E5E07}"]),["GUID","overlap_bgt","overlap_gisib"]])
-            # assert geom_matches[self.gisib_id_col].value_counts().max() == 1
+            assert geom_matches[self.gisib_id_col].value_counts().max() == 1
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(geom_matches[self.gisib_id_col].unique())]
 
         return geom_matches, remaining
