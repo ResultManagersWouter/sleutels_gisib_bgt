@@ -42,7 +42,7 @@ negate = False
 
 
 create_manual_buckets = True
-write_manual_buckets = False
+write_manual_buckets = True
 make_import_files = False
 
 # WARNING: Make sure BGT has the same data as gisib.
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 
         # hier schrijf je de buckets automatisch weg die manueel beoordeeld moeten worden?
         if write_manual_buckets:
-            controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"f{global_vars.today}_{'_'.join(input_gebieden).lower()}",
+            controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"{global_vars.today}_{'_'.join(input_gebieden).lower()}",
                                                        automatic_bucket_values=automatic_buckets)
 
         if not process_required or make_import_files:
