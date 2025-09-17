@@ -69,5 +69,5 @@ def write_invalid_types_to_geodataframe(
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         invalid_gisib_.to_file(output_path, layer=gisib_layer, driver="GPKG")
         bgt_invalid.to_file(output_path, layer=bgt_layer, driver="GPKG")
-        intersection.to_file(output_path,layer="intersection",driver="GPKG")
+        intersection.drop(columns=["ObjectType"]).to_file(output_path,layer="intersection",driver="GPKG")
     return intersection
