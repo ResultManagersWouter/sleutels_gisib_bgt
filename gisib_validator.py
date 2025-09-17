@@ -403,7 +403,7 @@ class GisibValidator:
                 )
                 # Keep only columns you want, with "geometry" as the actual intersection
 
-                overlaps.to_file(self.gpkg_path, layer=layer, driver="GPKG")
+
                 print(
                     "Overlap counts between the assets:\n\n:",
                     overlaps.loc[
@@ -412,7 +412,7 @@ class GisibValidator:
                 )
         return overlaps
 
-    def run_all_validations(self):
+    def run_all_validations(self,write: bool):
         """
         Runs all validations, optionally writing outputs to GeoPackage.
         """
@@ -427,6 +427,8 @@ class GisibValidator:
             key: gdf[gdf[self.gisib_id_col].isin(self.overlapping_guids)]
             for key, gdf in self.assets.items()
         }
+        if write:
+            self.overlaps.to_file(self.gpkg_path, driver="GPKG")
 
         return self.overlaps
         # {

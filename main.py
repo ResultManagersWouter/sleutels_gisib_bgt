@@ -40,10 +40,12 @@ input_gebieden = [
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
 
+write_overlaps = False
+write_manual_buckets = False
+write_import_files = False
 
 create_manual_buckets = True
-write_manual_buckets = True
-make_import_files = False
+create_invalid_types = True
 
 # WARNING: Make sure BGT has the same data as gisib.
 assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
@@ -145,7 +147,7 @@ if __name__ == "__main__":
             controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"{global_vars.today}_{'_'.join(input_gebieden).lower()}",
                                                        automatic_bucket_values=automatic_buckets)
 
-        if not process_required or make_import_files:
+        if not process_required or create_invalid_types:
             auto_buckets = controller.filtered_buckets(
                 bucket_type="automatic", automatic_bucket_values=automatic_buckets
             )
@@ -160,7 +162,7 @@ if __name__ == "__main__":
                     verbose=True,
                 )
             )
-            if not invalid_type_combinations and make_import_files:
+            if not invalid_type_combinations and write_import_files:
                 output_dir = f"output/{'_'.join()}_{global_vars.today}".replace(
                     " ", "_"
                 )
