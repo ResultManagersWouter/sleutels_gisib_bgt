@@ -40,6 +40,7 @@ class GisibValidator:
             today_str = date.today().isoformat()
             gpkg_path = f"overlaps_{today_str}.gpkg"
         self.gpkg_path = gpkg_path
+        self.overlaps = None
 
     def _combine_assets(self):
         dfs = []
@@ -416,8 +417,11 @@ class GisibValidator:
         # zonder relatieve hoogteligging
         # crosses = self.validate_no_cross_overlap()
         # met relatieve hoogteligging
-        by_area = self.validate_overlap_by_area()
-        return by_area
+        self.overlaps = self.validate_overlap_by_area()
+        self.overlapping_guids = list(set(self.overlaps.loc[:,self.gisib_id_col+"_1"].tolist() + self.overlaps.loc[:,self.gisib_id_col+"_2"].tolist()))
+        self.overlapping_guids = {}
+
+        return self.overlaps
         # {
         #     "internal": internals,
         #     "cross": crosses,
