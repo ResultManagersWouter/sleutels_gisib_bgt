@@ -62,10 +62,12 @@ def write_invalid_types_to_geodataframe(
     print(bgt_invalid.shape)
     print(invalid_gisib_.shape)
 
+    intersection = invalid_gisib_.overlay(bgt_invalid, how="intersection", keep_geom_type=True).loc[lambda df: df.geometry.area > 1]
+
     # ---- Write both layers ----
     if output_path:
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         invalid_gisib_.to_file(output_path, layer=gisib_layer, driver="GPKG")
         bgt_invalid.to_file(output_path, layer=bgt_layer, driver="GPKG")
-
-    return invalid_gisib_, bgt_invalid
+        intersection.to_file(output_path,layer="intersection",driver="GPKG")
+    return intersection
