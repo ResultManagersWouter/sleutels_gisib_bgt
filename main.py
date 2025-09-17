@@ -21,6 +21,7 @@ from controller_utils import (
 from buckets import ALL_AUTOMATIC_BUCKETS
 from bucket_processor import process_and_export_per_asset_mode
 from validate_output import validate_excel_matches
+from invalid_types import write_invalid_types_to_geodataframe
 from gebieden import gebieden
 
 # user input:
@@ -40,10 +41,13 @@ input_gebieden = [
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
 
+# Geef aan of je het weg wilt schrijven.
 write_overlaps = False
 write_manual_buckets = False
+write_invalid_types = True
 write_import_files = False
 
+# Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
 create_manual_buckets = True
 create_invalid_types = True
 
@@ -103,7 +107,7 @@ if __name__ == "__main__":
         gpkg_path=f"{global_vars.today}_overlaps_{'_'.join(input_gebieden).lower()}.gpkg",
     )
     # hierin staan de overlappingen geodataframe
-    overlaps_gisib = validator.run_all_validations()
+    overlaps_gisib = validator.run_all_validations(write=False)
 
     # matcher = GroenobjectenMatcher(gisib_gdf = assets["groenobjecten"],
     #                       bgt_gdf = bgt,
@@ -161,7 +165,22 @@ if __name__ == "__main__":
                     overlap_gisib_column = "overlap_gisib",
                     verbose=True,
                 )
+
             )
+            if write_invalid_types:
+                assets_invalid_gdf, bgt_invalid_gdf = write_invalid_types_to_geodataframe(
+                    assets=assets,  # {'verhardingen': gdf1, 'groenobjecten': gdf2, ...}
+                    bgt=bgt,
+                    invalid_type_combinations=invalid_type_combinations,
+                    gisib_id_column=global_vars.gisib_id_col,
+                    bgt_id_column=global_vars.bgt_id_col,
+                    skip_types=global_vars.SKIP_TYPES,  # optional
+                    skip_types_column=global_vars.TYPE_COL_GISIB,  # or whatever your type column is called
+                    output_path="output/invalid_types.gpkg",  # optional; omit if you don't want to write
+                    gisib_layer="gisib",
+                    bgt_layer="bgt",
+                )
+
             if not invalid_type_combinations and write_import_files:
                 output_dir = f"output/{'_'.join()}_{global_vars.today}".replace(
                     " ", "_"

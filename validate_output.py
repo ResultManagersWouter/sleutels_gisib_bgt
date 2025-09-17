@@ -142,3 +142,4 @@ def validate_excel_matches(
         logger.error(f"🔴 Duplicate GUIDs found across sources: {duplicate_guids_global}")
     else:
         logger.info("✅ All GUIDs are unique across match/remove/buckets.")
+
