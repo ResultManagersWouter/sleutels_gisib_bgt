@@ -107,18 +107,9 @@ if __name__ == "__main__":
         gpkg_path=f"{global_vars.today}_overlaps_{'_'.join(input_gebieden).lower()}.gpkg",
     )
     # hierin staan de overlappingen geodataframe
-    overlaps_gisib = validator.run_all_validations(write=False)
 
-    # matcher = GroenobjectenMatcher(gisib_gdf = assets["groenobjecten"],
-    #                       bgt_gdf = bgt,
-    #                                gisib_id_col=global_vars.gisib_id_col,
-    #                                bgt_id_col=global_vars.bgt_id_col,
-    #                                gisib_hoogteligging_col=global_vars.gisib_hoogteligging_col,
-    #                                bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col
-    #                                )
-    # overlap = matcher.calculate_overlap_df()
+    overlaps_gisib = validator.run_all_validations(write=write_overlaps)
 
-    # if there is no overlap, continue
 
     if overlaps_gisib.empty or create_manual_buckets:
     # if True:

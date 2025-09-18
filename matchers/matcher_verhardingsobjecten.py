@@ -39,7 +39,7 @@ class VerhardingenMatcher(MatcherBase):
         guids_to_split = self._select_1_bgt_to_n_gisib_overlap5_split(bgt_gisib)
         bucket_split = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_split)]
         remaining = intersection_df[
-            ~intersection_df[self.gisib_id_col].isin(guids_to_merge | guids_to_split)
+            ~intersection_df[self.gisib_id_col].isin(guids_to_split)
         ]
         return bucket_split, remaining
 
