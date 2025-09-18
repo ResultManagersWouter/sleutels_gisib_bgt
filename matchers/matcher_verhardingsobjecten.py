@@ -1,7 +1,9 @@
 from typing import Dict
 from geopandas import GeoDataFrame
 import logging
+from typing import Tuple
 from buckets import BucketsVRH
+
 
 from .matcher_base import MatcherBase
 
@@ -24,6 +26,23 @@ class VerhardingenMatcher(MatcherBase):
         ]
         return bucket, remaining
 
+    def select_1_bgt_to_n_gisib_overlap5_matches(
+            self, intersection_df: GeoDataFrame
+    ) -> Tuple[GeoDataFrame, GeoDataFrame, GeoDataFrame]:
+        """
+        Partition intersection_df into:
+            - bucket_merge: for guids to merge,
+            - bucket_split: for guids to split,
+            - remaining: all other rows.
+        """
+        bgt_gisib = self.build_bgt_gisib_grouped(intersection_df)
+        guids_to_split = self._select_1_bgt_to_n_gisib_overlap5_split(bgt_gisib)
+        bucket_split = intersection_df[intersection_df[self.gisib_id_col].isin(guids_to_split)]
+        remaining = intersection_df[
+            ~intersection_df[self.gisib_id_col].isin(guids_to_merge | guids_to_split)
+        ]
+        return bucket_split, remaining
+
     def run(self) -> Dict[str, GeoDataFrame]:
         """
         Runs the full bucketing/matching pipeline and returns a dict of named buckets.
@@ -42,12 +61,11 @@ class VerhardingenMatcher(MatcherBase):
             "1:1 geometric matches: %d, remaining: %d", len(bucket1), remaining.loc[:, self.gisib_id_col].nunique()
         )
 
-        bucket2, bucket3, remaining = self.select_1_bgt_to_n_gisib_overlap5_matches(
+        bucket3, remaining = self.select_1_bgt_to_n_gisib_overlap5_matches(
             remaining
         )
         logger.info(
-            "1 BGT : N GISIB merge: %d, split: %d, remaining: %d",
-            len(bucket2),
+            "1 BGT : N gisib %d, split: %d, remaining: %d",
             len(bucket3),
             remaining.loc[:, self.gisib_id_col].nunique(),
         )
@@ -70,7 +88,6 @@ class VerhardingenMatcher(MatcherBase):
         return {
             BucketsVRH.BUCKET0.value: bucket0,
             BucketsVRH.BUCKET1.value: bucket1,
-            BucketsVRH.BUCKET2.value: bucket2,
             BucketsVRH.BUCKET3.value: bucket3,
             BucketsVRH.BUCKET4.value: bucket4,
             BucketsVRH.BUCKET5.value: bucket5,
