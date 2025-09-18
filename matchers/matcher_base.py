@@ -311,7 +311,7 @@ class MatcherBase:
         """
         Returns matches where both overlap_bgt and overlap_gisib > 0.75, and remaining.
         """
-        mask = (intersection_df["overlap_bgt"] > 0.75) & (intersection_df["overlap_gisib"] > 0.75)
+        mask = ((intersection_df["overlap_bgt"] > 0.75) & (intersection_df["overlap_gisib"] > 0.75))
         geom_matches = intersection_df[mask]
         # assert every gisib_id is unique in matches
         if not geom_matches.empty:
@@ -333,7 +333,7 @@ class MatcherBase:
         """
         df = (
             intersection_df.loc[
-                lambda df: (df["overlap_bgt"] < 50) & (df["overlap_gisib"] > 0.85)
+                lambda df: ((df["overlap_bgt"] < 0.50) & (df["overlap_gisib"] > 0.85))
             ]
             .fillna({self.gisib_hoogteligging_col: 0})
             .assign(
@@ -370,23 +370,31 @@ class MatcherBase:
         # bucket1 : gisib and bgt matches:
         bucket1, remaining = self.select_1_to_1_geometric_matches(intersection_df)
         logger.info("1:1 geometric matches: %d, remaining: %d", len(bucket1), remaining.loc[:,self.gisib_id_col].nunique())
+        print(remaining.loc[lambda df: df.GUID == "{4537BC0E-1739-4B27-B8D7-44C82948A4E0}"])
+        print(1)
 
         # bucket 2 : gisib objects to merge - so 1 will get the id of BGT and the other one deleted
         # bucket 3 : gisib objects to split: so BGT needs to be splitted
         bucket2, bucket3, remaining = self.select_1_bgt_to_n_gisib_overlap5_matches(remaining)
         logger.info("1 BGT : N GISIB merge: %d, split: %d, remaining: %d", len(bucket2), len(bucket3), remaining.loc[:,self.gisib_id_col].nunique())
-
+        print(remaining.loc[lambda df: df.GUID == "{4537BC0E-1739-4B27-B8D7-44C82948A4E0}"])
+        print(2)
         # bucket 4: gisib object that needs to be adjusted because BGT is splitted
         bucket4, remaining = self.select_1_gisib_to_n_bgt_overlap5_matches(remaining)
         logger.info("1 GISIB : N BGT split: %d, remaining: %d", len(bucket4), remaining.loc[:,self.gisib_id_col].nunique())
-
+        print(remaining.loc[lambda df: df.GUID == "{4537BC0E-1739-4B27-B8D7-44C82948A4E0}"])
+        print(3)
         # bucket 5:  geometric match, only guid and identificatie lokaal id
         bucket5, remaining = self.geom_match(remaining)
         logger.info("Geom 75%% match: %d, remaining: %d", len(bucket5), remaining.loc[:,self.gisib_id_col].nunique())
-
+        print(remaining.loc[lambda df: df.GUID == "{4537BC0E-1739-4B27-B8D7-44C82948A4E0}"])
+        print(4)
         # clips: or process them in BGT, or delete them from gisib
         bucket6, remaining = self.clip_match(remaining)
         logger.info("Clip matches: %d, remaining: %d", len(bucket6), remaining.loc[:,self.gisib_id_col].nunique())
+        print(remaining.loc[lambda df: df.GUID == "{4537BC0E-1739-4B27-B8D7-44C82948A4E0}"])
+        print(5)
+
 
 
         # seperate by asset:
