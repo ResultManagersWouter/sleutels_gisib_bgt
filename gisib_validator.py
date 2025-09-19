@@ -278,16 +278,6 @@ class GisibValidator:
                 (result.overlap_1 > self.threshold)
                 | (result.overlap_2 > self.threshold)
                 ]
-            .assign(
-                **{
-                    f"{self.relatieve_hoogteligging_col}_2": lambda d: d[
-                        f"{self.relatieve_hoogteligging_col}_2"
-                    ].fillna(d[f"{self.relatieve_hoogteligging_col}_1"]),
-                    f"{self.relatieve_hoogteligging_col}_1": lambda d: d[
-                        f"{self.relatieve_hoogteligging_col}_1"
-                    ].fillna(d[f"{self.relatieve_hoogteligging_col}_2"]),
-                }
-            )
             .fillna(
                 {
                     f"{self.relatieve_hoogteligging_col}_1": 0,
