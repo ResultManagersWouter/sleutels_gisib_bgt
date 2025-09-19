@@ -44,7 +44,7 @@ negate = False
 # Geef aan of je het weg wilt schrijven.
 write_overlaps = False
 write_manual_buckets = False
-write_invalid_types = False
+write_invalid_types = True
 write_import_files = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat

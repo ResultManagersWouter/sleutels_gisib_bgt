@@ -4,7 +4,7 @@ from geopandas import GeoDataFrame
 from shapely import unary_union
 import pandas as pd
 import logging
-
+import global_vars
 from buckets import BucketsBase,AUTOMATIC_BUCKETS
 logger = logging.getLogger(__name__)
 class MatcherBase:
@@ -29,7 +29,8 @@ class MatcherBase:
         self._validate_init_args(
             gisib_gdf, bgt_gdf, gisib_id_col, bgt_id_col, gisib_hoogteligging_col, bgt_hoogteligging_col
         )
-        self.gisib = gisib_gdf.copy()
+        # skip the types immediately
+        self.gisib = gisib_gdf.copy().loc[lambda df: ~df.loc[:,global_vars.TYPE_COL_GISIB].isin(global_vars.SKIP_TYPES)]
         self.bgt = bgt_gdf.copy()
         self.gisib_id_col = gisib_id_col
         self.bgt_id_col = bgt_id_col
