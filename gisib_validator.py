@@ -294,20 +294,9 @@ class GisibValidator:
                     f"{self.relatieve_hoogteligging_col}_2": 0,
                 }
             )
-            # 🔑 ensure integer comparison
-            .assign(
-                **{
-                    f"{self.relatieve_hoogteligging_col}_1": lambda d: d[
-                        f"{self.relatieve_hoogteligging_col}_1"
-                    ].astype(int),
-                    f"{self.relatieve_hoogteligging_col}_2": lambda d: d[
-                        f"{self.relatieve_hoogteligging_col}_2"
-                    ].astype(int),
-                }
-            )
             .loc[
-                lambda d: d[f"{self.relatieve_hoogteligging_col}_1"]
-                          == d[f"{self.relatieve_hoogteligging_col}_2"]
+                lambda d: (d[f"{self.relatieve_hoogteligging_col}_1"].astype(int)
+                          == d[f"{self.relatieve_hoogteligging_col}_2"].astype(int))
             ]
             .assign(
                 objecttypes=lambda d: d.apply(
