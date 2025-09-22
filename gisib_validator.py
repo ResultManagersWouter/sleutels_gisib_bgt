@@ -422,7 +422,7 @@ class GisibValidator:
             if not self.overlaps.empty:
                 self.overlaps.to_file(self.gpkg_path, driver="GPKG")
             elif self.overlaps.empty:
-                logger.WARNING("No overlaps to export! ")
+                logger.warning("No overlaps to export! ")
 
         return self.overlaps
         # {
