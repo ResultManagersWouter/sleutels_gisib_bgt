@@ -417,7 +417,8 @@ class GisibValidator:
             for key, gdf in self.assets.items()
         }
         if write:
-            self.overlaps.drop(columns=["geometry_1","geometry_2"]).to_file(self.gpkg_path, driver="GPKG")
+            if not self.overlaps.empty:
+                self.overlaps.to_file(self.gpkg_path, driver="GPKG")
 
         return self.overlaps
         # {
