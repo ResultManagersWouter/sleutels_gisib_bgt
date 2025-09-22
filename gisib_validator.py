@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from datetime import date
 from itertools import combinations
-
+logger = logging.getLogger(__name__)
 
 class GisibValidator:
     def __init__(
@@ -422,7 +422,7 @@ class GisibValidator:
             if not self.overlaps.empty:
                 self.overlaps.to_file(self.gpkg_path, driver="GPKG")
             elif self.overlaps.empty:
-                logging.WARNING("No overlaps to export! ")
+                logger.WARNING("No overlaps to export! ")
 
         return self.overlaps
         # {
