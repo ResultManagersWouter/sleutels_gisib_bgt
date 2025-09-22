@@ -1,3 +1,5 @@
+import logging
+
 import geopandas as gpd
 import pandas as pd
 from datetime import date
@@ -419,6 +421,8 @@ class GisibValidator:
         if write:
             if not self.overlaps.empty:
                 self.overlaps.to_file(self.gpkg_path, driver="GPKG")
+            elif self.overlaps.empty:
+                logging.WARNING("No overlaps to export! ")
 
         return self.overlaps
         # {
