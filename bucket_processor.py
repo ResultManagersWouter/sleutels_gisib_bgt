@@ -59,9 +59,9 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
 
     df_objects = (
         df
-        .assign(area_bgt = lambda df: df.geometry_bgt.area)
-        .sort_values(by="area_bgt",ascending=False)
-          .assign(KEEP_GUID = ~df.duplicated(subset=[gisib_id_col],keep="first"))
+        .assign(area = lambda df: df.geometry.area)
+        .sort_values(by="area",ascending=False)
+          .assign(KEEP_GUID = lambda df: ~df.duplicated(subset=[gisib_id_col],keep="first"))
           .loc[:,[gisib_id_col, bgt_id_col, "geometry_bgt","KEEP_GUID"]]
     )
 
