@@ -99,10 +99,14 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
     change_geometry_objects = (
                                   df_objects
                                   .loc[lambda df: df.KEEP_GUID == True,
-                                  [gisib_id_col,bgt_id_col,"geometry"]].assign(change="change")
+                                  [gisib_id_col,bgt_id_col,"geometry_bgt"]]
+                                  .set_geometry("geometry_bgt")
+                                  .rename_geometry("geometry")
+                                  .set_crs("EPSG:28992")
+                                  .assign(change="change")
     )
 
-    assert len(new_guid_values) ==sum(len(add_objects))
+    assert len(new_guid_values) ==len(add_objects)
     add_objects = add_objects.assign(GUID = new_guid_values)
 
     # add_objects = add_objects.drop(columns=["DUP_GUID"])
