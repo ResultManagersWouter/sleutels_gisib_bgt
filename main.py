@@ -186,8 +186,17 @@ if __name__ == "__main__":
                     filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden, negate=negate,use_schema_columns=False
                 )
                 if invalid_type_combinations:
-                    pass
-                    # guids = [g["guid"] for asset in invalid_type_combinations for g in invalid_type_combinations[asset]]
+
+                    guid_invalid = [g["guid"] for asset in invalid_type_combinations for g in invalid_type_combinations[asset]]
+                    assets_all_columns = {
+                        asset: df.loc[
+                            lambda d: ~d.loc[:, global_vars.gisib_id_col].isin(guid_invalid),
+                            global_vars.gisib_id_col
+                        ].unique().tolist()
+                        for asset, df in assets_all_columns.items()
+                        if global_vars.gisib_id_col in df.columns
+                    }
+
                     # assets_all_columns
 
                 process_and_export_per_asset_mode(
