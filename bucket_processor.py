@@ -57,12 +57,17 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
 
     df_result = df[[gisib_id_col, bgt_id_col]].copy()
 
-    df_add = (
+    df_objects = (
         df
         .assign(area_bgt = lambda df: df.geometry_bgt.area)
         .sort_values(by="area_bgt",ascending=False)
-          .assign(DUP_GUID = ~df.duplicated(subset=[gisib_id_col],keep="last"))
-          .loc[:,[gisib_id_col, bgt_id_col, "geometry_bgt","DUP_GUID"]]
+          .assign(KEEP_GUID = ~df.duplicated(subset=[gisib_id_col],keep="first"))
+          .loc[:,[gisib_id_col, bgt_id_col, "geometry_bgt","KEEP_GUID"]]
+    )
+
+    df_add = (
+        df_objects
+        .loc[lambda df: df.KEEP_GUID == False]
     )
 
     # Build GeoDataFrame of additions: take attributes from GISIB object, geometry from BGT
@@ -78,26 +83,27 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
 
     # Remove unwanted columns if present
     columns_to_remove = {
-        "IDENTIFICATIE", "IMGEOID", "VRH_ID", "GRN_ID", "TRD_ID", "ID"
+        "IDENTIFICATIE", "IMGEOID", "VRH_ID", "GRN_ID", "TRD_ID", "ID","KEEP_GUID"
     }
     cols_to_drop = [col for col in columns_to_remove if col in add_objects.columns]
     if cols_to_drop:
         add_objects = add_objects.drop(columns=cols_to_drop)
 
 
-
-    mask = add_objects.DUP_GUID == True
-
     new_guid_values = [
-        "{" + str(uuid.uuid4()).upper() + "}" for _ in range(mask.sum())
+        "{" + str(uuid.uuid4()).upper() + "}" for _ in range(len(add_objects))
     ]
 
-    new_objects = add_objects.loc[mask]
 
-    change_geometry_objects = add_objects.loc[~mask,[gisib_id_col,bgt_id_col,"geometry"]]
 
-    assert len(new_guid_values) ==sum(mask)
-    new_objects["GUID"] = new_guid_values
+    change_geometry_objects = (
+                                  df_objects
+                                  .loc[lambda df: df.KEEP_GUID == True,
+                                  [gisib_id_col,bgt_id_col,"geometry"]].assign(change="change")
+    )
+
+    assert len(new_guid_values) ==sum(len(add_objects))
+    add_objects = add_objects.assign(GUID = new_guid_values)
 
     # add_objects = add_objects.drop(columns=["DUP_GUID"])
 

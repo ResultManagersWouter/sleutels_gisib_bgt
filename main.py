@@ -190,9 +190,8 @@ if __name__ == "__main__":
                     guid_invalid = [g["guid"] for asset in invalid_type_combinations for g in invalid_type_combinations[asset]]
                     assets_all_columns = {
                         asset: df.loc[
-                            lambda d: ~d.loc[:, global_vars.gisib_id_col].isin(guid_invalid),
-                            global_vars.gisib_id_col
-                        ].unique().tolist()
+                            lambda d: ~d.loc[:, global_vars.gisib_id_col].isin(guid_invalid)
+                        ].copy()
                         for asset, df in assets_all_columns.items()
                         if global_vars.gisib_id_col in df.columns
                     }
