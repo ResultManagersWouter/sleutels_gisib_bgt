@@ -45,7 +45,7 @@ negate = False
 write_overlaps = False
 write_manual_buckets = False
 write_invalid_types = False
-write_import_files = False
+write_import_files = True
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
 create_manual_buckets = True
@@ -172,10 +172,11 @@ if __name__ == "__main__":
                     bgt_layer="bgt",
                 )
 
-            if invalid_type_combinations and write_import_files:
+            if write_import_files:
                 output_dir = f"output/{'_'.join(input_gebieden)}_{global_vars.today}".replace(
                     " ", "_"
                 )
+
 
                 # Create the directory
                 os.makedirs(output_dir, exist_ok=True)
@@ -184,6 +185,10 @@ if __name__ == "__main__":
                 assets_all_columns = load_assets(
                     filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden, negate=negate,use_schema_columns=False
                 )
+                if invalid_type_combinations:
+                    pass
+                    # guids = [g["guid"] for asset in invalid_type_combinations for g in invalid_type_combinations[asset]]
+                    # assets_all_columns
 
                 process_and_export_per_asset_mode(
                     filtered_auto_buckets=filtered_auto_buckets,

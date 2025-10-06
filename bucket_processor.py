@@ -21,20 +21,28 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
     Keep a single (largest area) row per BGT id; return the matches to keep and
     a DataFrame of GISIB ids to remove (duplicates by BGT id).
     """
-    print(df.columns)
-    print("REMOVE")
-    df_result = df[[gisib_id_col, bgt_id_col]].copy()
-
+    df_result = (df
+        .copy()
+        .assign(area=lambda d: d.geometry.area)
+        .sort_values(by="area", ascending=False)
+    )
     df_remove = (
-        df.assign(area=lambda d: d.geometry.area)
-          .sort_values(by="area", ascending=False)
-          .loc[lambda d: d.duplicated(subset=[bgt_id_col]), [gisib_id_col]]
+          df_result.loc[lambda d: d.duplicated(subset=[bgt_id_col]), [gisib_id_col]]
+    )
+
+    df_change_geometry = (
+        df_result
+        .loc[lambda d: ~d.duplicated(subset=[bgt_id_col])]
+        .loc[:,[gisib_id_col, bgt_id_col, "geometry_bgt"]]
+        .set_geometry("geometry_bgt")
+        .rename_geometry("geometry")
+        .set_crs("EPSG:28992")
     )
 
     mask = ~df_result[gisib_id_col].isin(df_remove[gisib_id_col])
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
-    breakpoint()
-    return result_df, df_remove
+
+    return result_df, df_change_geometry,df_remove
 
 
 def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib_df: pd.DataFrame):
@@ -84,8 +92,12 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
         "{" + str(uuid.uuid4()).upper() + "}" for _ in range(mask.sum())
     ]
 
+    new_objects = add_objects.loc[mask]
+
+    change_geometry_objects = add_objects.loc[~mask,[gisib_id_col,bgt_id_col,"geometry"]]
+
     assert len(new_guid_values) ==sum(mask)
-    add_objects.loc[mask,"GUID"] = new_guid_values
+    new_objects["GUID"] = new_guid_values
 
     # add_objects = add_objects.drop(columns=["DUP_GUID"])
 
@@ -93,7 +105,7 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
     mask = ~df_result[bgt_id_col].isin(df_add[bgt_id_col])
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
 
-    return result_df, add_objects
+    return result_df, change_geometry_objects, add_objects
 
 
 # -----------------------
@@ -112,7 +124,6 @@ BUCKET_MATCH_CONFIG = {
 # -----------------------
 # Orchestration: export per asset
 # -----------------------
-
 def process_and_export_per_asset_mode(
     filtered_auto_buckets: dict[str, dict],
     gisib_datasets: dict[str, pd.DataFrame],
@@ -122,15 +133,22 @@ def process_and_export_per_asset_mode(
 ):
     """
     For each asset:
-      - Write 'match' and 'remove' to an Excel file matched_<asset>.xlsx (no 'add' sheet).
-      - Write 'add' to a GeoPackage adds_<asset>.gpkg (layer='add', EPSG:28992).
+      - Excel matched_<asset>.xlsx:
+          * 'match' sheet with accepted pairs
+          * 'remove' sheet with GISIB ids to remove
+      - GeoPackage adds_<asset>.gpkg:
+          * layer='add'               -> additions (EPSG:28992)
+          * layer='change_geometry'   -> geometry updates (EPSG:28992)
+
     Returns:
-      all_additions: dict[asset] -> GeoDataFrame of adds
-      all_removals:  dict[asset] -> DataFrame of GISIB ids to remove
+      all_additions:        dict[asset] -> GeoDataFrame of adds
+      all_removals:         dict[asset] -> DataFrame of GISIB ids to remove
+      all_geometry_changes: dict[asset] -> GeoDataFrame of geometry updates (from add/remove)
     """
     os.makedirs(output_dir, exist_ok=True)
     all_additions = {}
     all_removals = {}
+    all_geometry_changes = {}
 
     for asset, bucket_dict in filtered_auto_buckets.items():
         print(asset)
@@ -138,6 +156,7 @@ def process_and_export_per_asset_mode(
         match_rows = []
         add_rows = []
         remove_rows = []
+        change_geom_rows = []  # NEW: collect change-geometry from both branches
 
         for bucket_enum, df in bucket_dict.items():
             print(bucket_enum)
@@ -154,27 +173,38 @@ def process_and_export_per_asset_mode(
             logger.info(f"Applying mode '{mode}' with bucket '{bucket_label}' on asset '{asset}'")
 
             if mode == "add":
-                result_df, add_df = match_function(df, gisib_id_col, bgt_id_col, gisib_datasets[asset])
-                add_rows.append(add_df)
+                # returns: result_df, change_geometry_df, add_df
+                result_df, change_geometry_df, add_df = match_function(df, gisib_id_col, bgt_id_col, gisib_datasets[asset])
+                if add_df is not None and not add_df.empty:
+                    add_rows.append(add_df)
+                if change_geometry_df is not None and not change_geometry_df.empty:
+                    change_geom_rows.append(change_geometry_df)
                 print("add")
-                print(len(add_df))
-                print(result_df.shape)
+                print(len(add_df) if add_df is not None else 0)
+                print(result_df.shape if result_df is not None else (0, 0))
+
             elif mode == "remove":
-                result_df, remove_df = match_function(df, gisib_id_col, bgt_id_col)
-                if not remove_df.empty:
+                # returns: result_df, change_geometry_df, remove_df
+                result_df, change_geometry_df, remove_df = match_function(df, gisib_id_col, bgt_id_col)
+                if remove_df is not None and not remove_df.empty:
                     remove_rows.append(remove_df[[gisib_id_col]])
-                    print("remove")
-                    print(len(remove_df))
-                    print(result_df.shape)
+                if change_geometry_df is not None and not change_geometry_df.empty:
+                    change_geom_rows.append(change_geometry_df)
+                print("remove")
+                print(len(remove_df) if remove_df is not None else 0)
+                print(result_df.shape if result_df is not None else (0, 0))
+
             elif mode == "only":
                 print("only")
                 result_df = match_function(df, gisib_id_col, bgt_id_col)
-                print(result_df.shape)
+                print(result_df.shape if result_df is not None else (0, 0))
+
             else:
                 logger.error(f"Unsupported mode '{mode}' for bucket '{bucket_label}'")
                 continue
 
-            match_rows.append(result_df[[gisib_id_col, bgt_id_col]])
+            if result_df is not None and not result_df.empty:
+                match_rows.append(result_df[[gisib_id_col, bgt_id_col]])
 
         # ---- Excel (match + remove) ----
         asset_excel_path = os.path.join(output_dir, f"matched_{asset}.xlsx")
@@ -182,36 +212,57 @@ def process_and_export_per_asset_mode(
             if match_rows:
                 pd.concat(match_rows, ignore_index=True).to_excel(writer, sheet_name="match", index=False)
             if remove_rows:
-                combined_removes = pd.concat(remove_rows, ignore_index=True)
+                combined_removes = pd.concat(remove_rows, ignore_index=True).drop_duplicates()
                 combined_removes.to_excel(writer, sheet_name="remove", index=False)
                 all_removals[asset] = combined_removes
-
         logger.info(f"✅ Exported match/remove for '{asset}' to {asset_excel_path}")
 
-        # ---- GeoPackage (add layer) ----
-        if add_rows:
-            combined_adds = pd.concat(add_rows, ignore_index=True)
+        # ---- GeoPackage (add + change_geometry) ----
+        gpkg_path = os.path.join(output_dir, f"adds_{asset}.gpkg")
 
-            # Make sure it's a proper GeoDataFrame and CRS is EPSG:28992
-            if not isinstance(combined_adds, gpd.GeoDataFrame):
-                combined_adds = gpd.GeoDataFrame(combined_adds, geometry="geometry", crs="EPSG:28992")
-            else:
-                # Ensure CRS set (and correct) even if upstream already set it
-                if combined_adds.crs is None or str(combined_adds.crs).upper() != "EPSG:28992":
-                    combined_adds = combined_adds.set_crs("EPSG:28992", allow_override=True)
+        # Helper: coerce to GeoDataFrame with geometry from 'geometry' or fallback 'geometry_bgt'
+        def _to_crs_28992(gdf_like):
+            if isinstance(gdf_like, gpd.GeoDataFrame):
+                gdf = gdf_like
+                if gdf.crs is None or str(gdf.crs).upper() != "EPSG:28992":
+                    gdf = gdf.set_crs("EPSG:28992", allow_override=True)
+                return gdf
+            # DataFrame: pick geometry column
+            geom_col = "geometry" if "geometry" in gdf_like.columns else "geometry_bgt"
+            gdf = gpd.GeoDataFrame(gdf_like.copy(), geometry=geom_col)
+            # rename to standard 'geometry' if needed
+            if geom_col != "geometry":
+                gdf = gdf.rename_geometry("geometry")
+            return gdf.set_crs("EPSG:28992")
 
-            gpkg_path = os.path.join(output_dir, f"adds_{asset}.gpkg")
-            # Overwrite the file if it exists to avoid layer append confusion
+        have_adds = bool(add_rows)
+        have_changes = bool(change_geom_rows)
+        if have_adds or have_changes:
             if os.path.exists(gpkg_path):
-                os.remove(gpkg_path)
+                os.remove(gpkg_path)  # start clean so both layers are written fresh
 
+        # Additions layer
+        if have_adds:
+            combined_adds = pd.concat(add_rows, ignore_index=True)
+            combined_adds = _to_crs_28992(combined_adds)
             print(type(combined_adds))
             print(combined_adds.columns)
             print(combined_adds.info())
             print(combined_adds)
             combined_adds.to_file(gpkg_path, layer="add", driver="GPKG")
-
             all_additions[asset] = combined_adds
-            logger.info(f"🗺️  Exported add layer for '{asset}' to {gpkg_path} (layer: 'add')")
+            logger.info(f"🗺️  Exported 'add' layer for '{asset}' to {gpkg_path}")
 
-    return all_additions, all_removals
+        # Change-geometry layer (from add + remove)
+        if have_changes:
+            combined_changes = pd.concat(change_geom_rows, ignore_index=True)
+            combined_changes = _to_crs_28992(combined_changes)
+            # keep useful ID columns if present
+            keep_first = [c for c in [gisib_id_col, bgt_id_col] if c in combined_changes.columns]
+            other_cols = [c for c in combined_changes.columns if c not in keep_first + ["geometry"]]
+            combined_changes = combined_changes[keep_first + other_cols + ["geometry"]]
+            combined_changes.to_file(gpkg_path, layer="change_geometry", driver="GPKG")
+            all_geometry_changes[asset] = combined_changes
+            logger.info(f"🗺️  Exported 'change_geometry' layer for '{asset}' to {gpkg_path}")
+
+    return all_additions, all_removals, all_geometry_changes
