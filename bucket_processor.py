@@ -103,7 +103,7 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
                                   .set_geometry("geometry_bgt")
                                   .rename_geometry("geometry")
                                   .set_crs("EPSG:28992")
-                                  .assign(change="change")
+
     )
 
     assert len(new_guid_values) ==len(add_objects)
