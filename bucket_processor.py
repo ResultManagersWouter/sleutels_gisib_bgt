@@ -21,6 +21,8 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
     Keep a single (largest area) row per BGT id; return the matches to keep and
     a DataFrame of GISIB ids to remove (duplicates by BGT id).
     """
+    print(df.columns)
+    print("REMOVE")
     df_result = df[[gisib_id_col, bgt_id_col]].copy()
 
     df_remove = (
@@ -31,7 +33,7 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
 
     mask = ~df_result[gisib_id_col].isin(df_remove[gisib_id_col])
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
-
+    breakpoint()
     return result_df, df_remove
 
 

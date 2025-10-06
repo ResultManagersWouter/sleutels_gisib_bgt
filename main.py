@@ -42,10 +42,10 @@ input_gebieden = [
 negate = False
 
 # Geef aan of je het weg wilt schrijven.
-write_overlaps = True
-write_manual_buckets = True
-write_invalid_types = True
-write_import_files = True
+write_overlaps = False
+write_manual_buckets = False
+write_invalid_types = False
+write_import_files = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
 create_manual_buckets = True

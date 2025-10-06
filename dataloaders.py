@@ -296,7 +296,7 @@ def load_assets(
             filter_column=gebied_col,
             filter_value=gebieden,
             negate=negate,
-        ).loc[lambda df: df.GUID != "{14D0EF4E-50F2-448A-B6DC-0AA564AE3651}"],
+        ),
         AssetType.VERHARDINGEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_VRH"),
             columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN] if use_schema_columns else None,
@@ -305,6 +305,6 @@ def load_assets(
             filter_column=gebied_col,
             filter_value=gebieden,
             negate=negate,
-        ).loc[lambda df: df.GUID != "{F5461361-9718-499C-85F9-EC55FF5B0D72}"],
+        ),
     }
 
