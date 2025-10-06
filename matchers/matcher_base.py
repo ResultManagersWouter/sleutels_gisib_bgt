@@ -326,7 +326,6 @@ class MatcherBase:
                 duplicates = geom_matches.loc[geom_matches[self.gisib_id_col].isin(dup_counts[dup_counts > 1].index),[self.gisib_id_col,self.bgt_id_col,"OBJECTTYPE","TYPE","ObjectType"]]
                 print(duplicates)
                 print(duplicates.loc[:,self.gisib_id_col].unique())
-
             assert geom_matches[self.gisib_id_col].value_counts().max() == 1
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(geom_matches[self.gisib_id_col].unique())]
 
