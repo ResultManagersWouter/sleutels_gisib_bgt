@@ -131,7 +131,6 @@ class Controller:
 
     def write_manual_buckets_to_geopackages(
         self,
-        suffix: str,
         directory: str = ".",
         automatic_bucket_values: list[str] = None,
     ):
@@ -157,11 +156,11 @@ class Controller:
         automatic_bucket_values_set = set(automatic_bucket_values)
 
         for asset_name, buckets in results.items():
-            filename = os.path.join(directory, f"{asset_name}_{suffix}.gpkg")
             asset_gisib_gdf = self.assets[asset_name]
             layers_written = 0
 
             for bucket_name, bucket_gdf in buckets.items():
+                filename = os.path.join(directory, f"{asset_name}_{bucket_name}.gpkg")
                 if bucket_name in automatic_bucket_values_set or bucket_gdf.empty:
                     continue  # Skip automatic or empty buckets
 

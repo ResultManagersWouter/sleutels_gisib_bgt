@@ -4,6 +4,7 @@ import geopandas as gpd
 import pandas as pd
 from datetime import date
 from itertools import combinations
+from global_vars import THRESHOLD_OVERLAP
 logger = logging.getLogger(__name__)
 
 class GisibValidator:
@@ -13,7 +14,7 @@ class GisibValidator:
         gisib_id_col: str,
         relatieve_hoogteligging_col: str,
         objecttype_col: str,
-        threshold: float = 0.5,
+        threshold: float = THRESHOLD_OVERLAP,
         write_outputs: dict[str, bool] = {
             "internal": False,
             "cross": False,

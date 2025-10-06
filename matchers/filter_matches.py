@@ -1,11 +1,11 @@
 import geopandas as gpd
 import pandas as pd
-
+from global_vars import TRESHOLD_HAGEN
 
 def filter_hagen(intersection_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     hagen_intersection_df = (
         intersection_df.loc[lambda df: df.TYPE.isin(["Haag"])]
-        .loc[lambda df: df.overlap_gisib > 0.80]
+        .loc[lambda df: df.overlap_gisib > TRESHOLD_HAGEN]
         .loc[lambda df: df.ObjectType == "Vegetatieobject"]
     )
 

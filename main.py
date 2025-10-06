@@ -35,7 +35,6 @@ input_gebieden = [
  # 'Westpoort',
  # 'Zuid',
  'Zuidoost',
-
 ]
 
 # negate = False = intersection met de input gebieden
@@ -44,9 +43,9 @@ negate = False
 
 # Geef aan of je het weg wilt schrijven.
 write_overlaps = True
-write_manual_buckets = False
-write_invalid_types = False
-write_import_files = False
+write_manual_buckets = True
+write_invalid_types = True
+write_import_files = True
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
 create_manual_buckets = True
@@ -138,9 +137,9 @@ if __name__ == "__main__":
         # I have checked them
         # process_required = False
 
-        # hier schrijf je de buckets automatisch weg die manueel beoordeeld moeten worden?
+        # hier schrijf je de buckets weg die manueel beoordeeld moeten worden?
         if write_manual_buckets:
-            controller.write_manual_buckets_to_geopackages(suffix="manual", directory=f"{global_vars.today}_{'_'.join(input_gebieden).lower()}",
+            controller.write_manual_buckets_to_geopackages(directory=f"{global_vars.today}_{'_'.join(input_gebieden).lower()}",
                                                        automatic_bucket_values=automatic_buckets)
 
         if not process_required or create_invalid_types:
@@ -168,13 +167,13 @@ if __name__ == "__main__":
                     bgt_id_column=global_vars.bgt_id_col,
                     skip_types=global_vars.SKIP_TYPES,  # optional
                     skip_types_column=global_vars.TYPE_COL_GISIB,  # or whatever your type column is called
-                    output_path="output/invalid_types.gpkg",  # optional; omit if you don't want to write
+                    output_path=f"output/{global_vars.today}_{'_'.join(input_gebieden)}_invalid_types.gpkg",  # optional; omit if you don't want to write
                     gisib_layer="gisib",
                     bgt_layer="bgt",
                 )
 
-            if not invalid_type_combinations and write_import_files:
-                output_dir = f"output/{'_'.join()}_{global_vars.today}".replace(
+            if invalid_type_combinations and write_import_files:
+                output_dir = f"output/{'_'.join(input_gebieden)}_{global_vars.today}".replace(
                     " ", "_"
                 )
 

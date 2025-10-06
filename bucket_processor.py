@@ -3,6 +3,7 @@ import os
 import logging
 import pandas as pd
 import geopandas as gpd
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -47,10 +48,11 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
     df_result = df[[gisib_id_col, bgt_id_col]].copy()
 
     df_add = (
-        df.assign(area=lambda d: d.geometry.area)
-          .sort_values(by="area", ascending=False)
-          .loc[df.duplicated(subset=[gisib_id_col]),
-               [gisib_id_col, bgt_id_col, "geometry_bgt"]]
+        df
+        .assign(area_bgt = lambda df: df.geometry_bgt.area)
+        .sort_values(by="area_bgt",ascending=False)
+          .assign(DUP_GUID = ~df.duplicated(subset=[gisib_id_col],keep="last"))
+          .loc[:,[gisib_id_col, bgt_id_col, "geometry_bgt","DUP_GUID"]]
     )
 
     # Build GeoDataFrame of additions: take attributes from GISIB object, geometry from BGT
@@ -66,14 +68,24 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
 
     # Remove unwanted columns if present
     columns_to_remove = {
-        "IDENTIFICATIE", "IMGEOID", "VRH_ID", "GRN_ID", "TRD_ID", "ID", "GUID"
+        "IDENTIFICATIE", "IMGEOID", "VRH_ID", "GRN_ID", "TRD_ID", "ID"
     }
     cols_to_drop = [col for col in columns_to_remove if col in add_objects.columns]
     if cols_to_drop:
         add_objects = add_objects.drop(columns=cols_to_drop)
 
-    # Add empty GUID column
-    add_objects["GUID"] = pd.NA
+
+
+    mask = add_objects.DUP_GUID == True
+
+    new_guid_values = [
+        "{" + str(uuid.uuid4()).upper() + "}" for _ in range(mask.sum())
+    ]
+
+    assert len(new_guid_values) ==sum(mask)
+    add_objects.loc[mask,"GUID"] = new_guid_values
+
+    # add_objects = add_objects.drop(columns=["DUP_GUID"])
 
     # result_df excludes the rows that will be added (those in df_add by BGT id)
     mask = ~df_result[bgt_id_col].isin(df_add[bgt_id_col])
@@ -190,6 +202,11 @@ def process_and_export_per_asset_mode(
             # Overwrite the file if it exists to avoid layer append confusion
             if os.path.exists(gpkg_path):
                 os.remove(gpkg_path)
+
+            print(type(combined_adds))
+            print(combined_adds.columns)
+            print(combined_adds.info())
+            print(combined_adds)
             combined_adds.to_file(gpkg_path, layer="add", driver="GPKG")
 
             all_additions[asset] = combined_adds

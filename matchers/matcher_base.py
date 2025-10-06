@@ -320,8 +320,11 @@ class MatcherBase:
             # Voer de volgende print statements, check in welke laag deze zit, als het groenobjecten is, moet je in de matcher_Groenobjecten
             # het matchingspercentage van de hagen eventueel aanpassen. Laat zien wat het huidige percentage is in de onderstaande statements
         #   # vul zelf de guid even in.
-            # print(geom_matches[self.gisib_id_col].value_counts())
-            # print(intersection_df.loc[lambda df: df.loc[:,"GUID"].isin(["{D076883D-3EAB-4BDB-AF0D-9CDC6F6E5E07}"]),["GUID","overlap_bgt","overlap_gisib"]])
+
+            if geom_matches[self.gisib_id_col].value_counts().max() > 1:
+                dup_counts = geom_matches[self.gisib_id_col].value_counts()
+                duplicates = geom_matches[geom_matches[self.gisib_id_col].isin(dup_counts[dup_counts > 1].index)]
+                print(duplicates.index)
             assert geom_matches[self.gisib_id_col].value_counts().max() == 1
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(geom_matches[self.gisib_id_col].unique())]
 
