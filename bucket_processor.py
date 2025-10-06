@@ -39,7 +39,7 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
         .set_crs("EPSG:28992")
     )
 
-    mask = ~df_result[gisib_id_col].isin(df_remove[gisib_id_col])
+    mask = ~df_result[gisib_id_col].isin(list(set(df_remove[gisib_id_col].tolist() + df_change_geometry[gisib_id_col].tolist())))
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
 
     return result_df, df_change_geometry,df_remove
@@ -112,7 +112,7 @@ def match_id_and_add(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str, gisib
     # add_objects = add_objects.drop(columns=["DUP_GUID"])
 
     # result_df excludes the rows that will be added (those in df_add by BGT id)
-    mask = ~df_result[bgt_id_col].isin(df_add[bgt_id_col])
+    mask = ~(df_result[bgt_id_col].isin(add_objects[bgt_id_col].tolist()) | df_result[gisib_id_col].isin(change_geometry_objects[gisib_id_col].tolist()))
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
 
     return result_df, change_geometry_objects, add_objects
