@@ -32,13 +32,14 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
 
     df_change_geometry = (
         df_result
-        .loc[lambda d: ~d.duplicated(subset=[bgt_id_col])]
+        .loc[lambda d: ~d.loc[:,gisib_id_col].isin(df_remove.loc[:,gisib_id_col].tolist())]
+        .loc[lambda d: ~d.duplicated(subset=[gisib_id_col])]
         .loc[:,[gisib_id_col, bgt_id_col, "geometry_bgt"]]
         .set_geometry("geometry_bgt")
         .rename_geometry("geometry")
         .set_crs("EPSG:28992")
     )
-
+    breakpoint()
     mask = ~df_result[gisib_id_col].isin(list(set(df_remove[gisib_id_col].tolist() + df_change_geometry[gisib_id_col].tolist())))
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
 
