@@ -39,7 +39,7 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
         .rename_geometry("geometry")
         .set_crs("EPSG:28992")
     )
-    breakpoint()
+
     mask = ~df_result[gisib_id_col].isin(list(set(df_remove[gisib_id_col].tolist() + df_change_geometry[gisib_id_col].tolist())))
     result_df = df_result.loc[mask, [gisib_id_col, bgt_id_col]]
 

@@ -13,6 +13,7 @@ from columns_config import (
     CONTROLE_TABEL_COLUMNS,
 EXPORT_INVALID_TYPE_COMBINATIONS
 )
+from exclude_guids import collect_all_guids
 from controller import Controller
 from controller_utils import (
     should_process_buckets,
@@ -40,6 +41,7 @@ input_gebieden = [
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
+exclude_guids = False
 
 # Geef aan of je het weg wilt schrijven.
 write_overlaps = False
@@ -98,6 +100,10 @@ if __name__ == "__main__":
     assets = load_assets(
         filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden,negate=negate
     )
+    if exclude_guids:
+        folder = os.environ.get("EXCLUDE_FOLDER")
+        if folder:
+            guids_to_exclude = collect_all_guids(folder)
 
     validator = GisibValidator(
         assets=assets,
