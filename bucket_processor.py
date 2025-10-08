@@ -4,6 +4,7 @@ import logging
 import pandas as pd
 import geopandas as gpd
 import uuid
+import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ def match_id_and_remove(df: pd.DataFrame, gisib_id_col: str, bgt_id_col: str):
     )
     df_remove = (
           df_result.loc[lambda d: d.duplicated(subset=[bgt_id_col]), [gisib_id_col]]
-    )
+    ).assign(VALID_TILL = datetime.today().strftime('%Y-%m-%d %H:%M:%S'))
 
     df_change_geometry = (
         df_result
