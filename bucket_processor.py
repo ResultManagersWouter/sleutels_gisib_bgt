@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 import geopandas as gpd
 import uuid
-import datetime
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
