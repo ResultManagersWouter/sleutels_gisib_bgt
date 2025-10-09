@@ -41,17 +41,17 @@ input_gebieden = [
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
-exclude_guids = False
+exclude_guids = True
 
 # Geef aan of je het weg wilt schrijven.
 write_overlaps = False
 write_manual_buckets = False
 write_invalid_types = False
-write_import_files = True
+write_import_files = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
-create_manual_buckets = True
-create_invalid_types = True
+create_manual_buckets = False
+create_invalid_types = False
 
 # WARNING: Make sure BGT has the same data as gisib.
 assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
@@ -104,6 +104,16 @@ if __name__ == "__main__":
         folder = os.environ.get("EXCLUDE_FOLDER")
         if folder:
             guids_to_exclude = collect_all_guids(folder)
+            # exclude_extra = ["xxxx","yyyy","xxxxx"]
+            # guids_to_exclude = guids_to_exclude + exclude_extra
+            # for name,df in assets.items():
+            #     print(f"{name} --- {df.shape}")
+            assets = {
+                name: df.loc[~df[global_vars.gisib_id_col].isin(guids_to_exclude)]
+                for name, df in assets.items()
+            }
+            # for name,df in assets.items():
+            #     print(f"{name} --- {df.shape}")
 
     validator = GisibValidator(
         assets=assets,
