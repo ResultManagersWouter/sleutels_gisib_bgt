@@ -41,10 +41,10 @@ input_gebieden = [
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
-exclude_guids = True
+exclude_guids = False
 
 # Geef aan of je het weg wilt schrijven.
-write_overlaps = False
+write_overlaps = True
 write_manual_buckets = False
 write_invalid_types = False
 write_import_files = False

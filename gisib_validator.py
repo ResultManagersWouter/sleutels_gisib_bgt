@@ -53,7 +53,7 @@ class GisibValidator:
         dfs = []
         for name, gdf in self.assets.items():
             gdf = gdf.copy().to_crs(self.standard_crs)
-            gdf["objecttype"] = name
+            gdf["objtype"] = name
             dfs.append(gdf)
         return pd.concat(dfs).reset_index(drop=True)
 
@@ -421,6 +421,8 @@ class GisibValidator:
         }
         if write:
             if not self.overlaps.empty:
+                print(self.gisib.columns)
+
                 self.gisib.loc[lambda df: df.loc[:,self.gisib_id_col].isin(self.overlapping_guids)].to_file(self.gpkg_path, driver="GPKG",layer="gisib")
                 self.overlaps.to_file(self.gpkg_path, driver="GPKG",layer="intersecties")
 
