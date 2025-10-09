@@ -421,7 +421,9 @@ class GisibValidator:
         }
         if write:
             if not self.overlaps.empty:
-                self.overlaps.to_file(self.gpkg_path, driver="GPKG")
+                self.gisib.loc[lambda df: df.loc[:,self.gisib_id_col].isin(self.overlapping_guids)].to_file(self.gpkg_path, driver="GPKG",layer="gisib")
+                self.overlaps.to_file(self.gpkg_path, driver="GPKG",layer="intersecties")
+
             elif self.overlaps.empty:
                 logger.warning("No overlaps to export! ")
 

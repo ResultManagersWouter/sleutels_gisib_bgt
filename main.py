@@ -106,14 +106,14 @@ if __name__ == "__main__":
             guids_to_exclude = collect_all_guids(folder)
             # exclude_extra = ["xxxx","yyyy","xxxxx"]
             # guids_to_exclude = guids_to_exclude + exclude_extra
-            # for name,df in assets.items():
-            #     print(f"{name} --- {df.shape}")
+            for name,df in assets.items():
+                print(f"{name} --- {df.shape}")
             assets = {
                 name: df.loc[~df[global_vars.gisib_id_col].isin(guids_to_exclude)]
                 for name, df in assets.items()
             }
-            # for name,df in assets.items():
-            #     print(f"{name} --- {df.shape}")
+            for name,df in assets.items():
+                print(f"{name} --- {df.shape}")
 
     validator = GisibValidator(
         assets=assets,
