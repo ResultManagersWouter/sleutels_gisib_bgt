@@ -193,8 +193,6 @@ if __name__ == "__main__":
                 output_dir = f"output/{'_'.join(input_gebieden)}_{global_vars.today}".replace(
                     " ", "_"
                 )
-
-
                 # Create the directory
                 os.makedirs(output_dir, exist_ok=True)
                 logger.info(f"Created output directory: {output_dir}")

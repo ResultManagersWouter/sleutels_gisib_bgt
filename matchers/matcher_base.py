@@ -439,6 +439,3 @@ class MatcherBase:
 
     def prepare_imports(self):
         results = self.run()
-
-
-df = pd.read_excel("path_naar_excel.xlsx")
