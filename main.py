@@ -174,7 +174,7 @@ if __name__ == "__main__":
                 )
 
             )
-            if write_invalid_types:
+            if create_invalid_types:
                 invalid_types = write_invalid_types_to_geodataframe(
                     assets=assets,  # {'verhardingen': gdf1, 'groenobjecten': gdf2, ...}
                     bgt=bgt,
@@ -186,6 +186,7 @@ if __name__ == "__main__":
                     output_path=f"output/{global_vars.today}_{'_'.join(input_gebieden)}_invalid_types.gpkg",  # optional; omit if you don't want to write
                     gisib_layer="gisib",
                     bgt_layer="bgt",
+                    write=write_invalid_types
                 )
 
             if write_import_files:

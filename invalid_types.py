@@ -14,6 +14,7 @@ def write_invalid_types_to_geodataframe(
     skip_types: Optional[List[str]] = None,
     skip_types_column: str = "TYPE",
     output_path: Optional[str] = None,
+    write : bool = True,
     gisib_layer: str = "gisib",
     bgt_layer: str = "bgt",
 ) -> gpd.GeoDataFrame:
@@ -61,7 +62,7 @@ def write_invalid_types_to_geodataframe(
     intersection = invalid_gisib_.overlay(bgt_invalid, how="intersection", keep_geom_type=True).loc[lambda df: df.geometry.area > 1]
 
     # ---- Write both layers ----
-    if output_path:
+    if (output_path) & (write):
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
         invalid_gisib_.to_file(output_path, layer=gisib_layer, driver="GPKG")
         bgt_invalid.to_file(output_path, layer=bgt_layer, driver="GPKG")
