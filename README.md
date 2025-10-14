@@ -59,13 +59,13 @@ cd sleutels_gisib_bgt
 
 ### 2. Maak een nieuwe Python-omgeving aan
 
-#### macOS / Linux:
+#### macOS / Linux (voorbeeld, kan anders zijn):
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-#### Windows:
+#### Windows (voorbeeld, kan anders zijn):
 ```bash
 python -m venv .venv
 .venv\Scripts\activate

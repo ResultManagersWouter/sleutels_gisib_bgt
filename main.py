@@ -28,14 +28,14 @@ from gebieden import gebieden
 # user input:
 input_gebieden = [
     # 'Centrum',
- # 'Nieuw-West',
+ 'Nieuw-West',
  # 'Noord',
  # 'Oost',
  # 'Weesp',
  # 'West',
  # 'Westpoort',
  # 'Zuid',
- 'Zuidoost',
+ # 'Zuidoost',
 ]
 
 # negate = False = intersection met de input gebieden
@@ -44,7 +44,7 @@ negate = False
 exclude_guids = False
 
 # Geef aan of je het weg wilt schrijven.
-write_overlaps = True
+write_overlaps = False
 write_manual_buckets = False
 write_invalid_types = False
 write_import_files = False
