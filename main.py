@@ -27,7 +27,7 @@ from gebieden import gebieden
 
 # user input:
 input_gebieden = [
-    # 'Centrum',
+ #    'Centrum',
  'Nieuw-West',
  # 'Noord',
  # 'Oost',
@@ -41,16 +41,16 @@ input_gebieden = [
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
-exclude_guids = False
+exclude_guids = True
 
 # Geef aan of je het weg wilt schrijven.
 write_overlaps = False
-write_manual_buckets = False
+write_manual_buckets = True
 write_invalid_types = False
 write_import_files = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
-create_manual_buckets = False
+create_manual_buckets = True
 create_invalid_types = False
 
 # WARNING: Make sure BGT has the same data as gisib.
@@ -104,14 +104,21 @@ if __name__ == "__main__":
         folder = os.environ.get("EXCLUDE_FOLDER")
         if folder:
             guids_to_exclude = collect_all_guids(folder)
-            # exclude_extra = ["xxxx","yyyy","xxxxx"]
-            # guids_to_exclude = guids_to_exclude + exclude_extra
+            exclude_extra = ['{1DAAFE1D-E43A-4F89-B5E2-888814BC1DD8}',
+             '{5A711FD4-8513-498E-B5B8-DB43F1FB478D}',
+             '{72ADA0D3-3F6F-43CC-A2BE-8429BD888413}',
+             '{A2669054-A4F3-4ED6-AD90-6F0C7D4C48F4}',
+             '{70609C86-F319-40C6-BD00-27B962E17465}',
+             '{815E45E8-88DB-41FC-B972-A2C896F11786}',
+             '{B78641D8-F283-450A-829C-E926FCE05021}']
+            guids_to_exclude = guids_to_exclude + exclude_extra
             for name,df in assets.items():
                 print(f"{name} --- {df.shape}")
             assets = {
                 name: df.loc[~df[global_vars.gisib_id_col].isin(guids_to_exclude)]
                 for name, df in assets.items()
             }
+            print("--- after excluding guids ---")
             for name,df in assets.items():
                 print(f"{name} --- {df.shape}")
 
