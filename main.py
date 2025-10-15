@@ -102,16 +102,14 @@ if __name__ == "__main__":
     )
     if exclude_guids:
         folder = os.environ.get("EXCLUDE_FOLDER")
+        exclude_extra = []
         if folder:
             guids_to_exclude = collect_all_guids(folder)
-            exclude_extra = ['{1DAAFE1D-E43A-4F89-B5E2-888814BC1DD8}',
-             '{5A711FD4-8513-498E-B5B8-DB43F1FB478D}',
-             '{72ADA0D3-3F6F-43CC-A2BE-8429BD888413}',
-             '{A2669054-A4F3-4ED6-AD90-6F0C7D4C48F4}',
-             '{70609C86-F319-40C6-BD00-27B962E17465}',
-             '{815E45E8-88DB-41FC-B972-A2C896F11786}',
-             '{B78641D8-F283-450A-829C-E926FCE05021}']
-            guids_to_exclude = guids_to_exclude + exclude_extra
+            if exclude_extra:
+                guids_to_exclude += exclude_extra
+        else:
+            guids_to_exclude = exclude_extra
+
             for name,df in assets.items():
                 print(f"{name} --- {df.shape}")
             assets = {
