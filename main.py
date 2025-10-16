@@ -11,7 +11,7 @@ from columns_config import (
     BGT_SHAPE_COLUMNS,
     column_mapping_bgt_controle_tabel,
     CONTROLE_TABEL_COLUMNS,
-EXPORT_INVALID_TYPE_COMBINATIONS
+    EXPORT_INVALID_TYPE_COMBINATIONS,
 )
 from exclude_guids import collect_all_guids
 from controller import Controller
@@ -27,15 +27,15 @@ from gebieden import gebieden
 
 # user input:
 input_gebieden = [
- #    'Centrum',
- 'Nieuw-West',
- # 'Noord',
- # 'Oost',
- # 'Weesp',
- # 'West',
- # 'Westpoort',
- # 'Zuid',
- # 'Zuidoost',
+    #    'Centrum',
+    "Nieuw-West",
+    # 'Noord',
+    # 'Oost',
+    # 'Weesp',
+    # 'West',
+    # 'Westpoort',
+    # 'Zuid',
+    # 'Zuidoost',
 ]
 
 # negate = False = intersection met de input gebieden
@@ -50,11 +50,14 @@ write_invalid_types = False
 write_import_files = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
+create_overlaps = False
 create_manual_buckets = True
 create_invalid_types = False
 
 # WARNING: Make sure BGT has the same data as gisib.
-assert all([gebied in gebieden for gebied in input_gebieden]), "One or more gebieden are missing"
+assert all(
+    [gebied in gebieden for gebied in input_gebieden]
+), "One or more gebieden are missing"
 # check of alle gebieden voorkomen in hetzelfde attribuut:
 # zijn alle gebieden of allemaal stadsdelen, of allemaal buurten.
 assert len(set([gebieden[gebied] for gebied in input_gebieden])) == 1
@@ -94,11 +97,14 @@ if __name__ == "__main__":
         objecttypes=objecttypes_bgt,
         object_col=ObjectType.BGTOBJECTTYPE.value,
         filter_polygon=filter_polygon,
-        negate = negate
+        negate=negate,
     )
     # Load assets
     assets = load_assets(
-        filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden,negate=negate
+        filter_polygon=filter_polygon,
+        gebied_col=gebied_col,
+        gebieden=input_gebieden,
+        negate=negate,
     )
     if exclude_guids:
         folder = os.environ.get("EXCLUDE_FOLDER")
@@ -110,129 +116,139 @@ if __name__ == "__main__":
         else:
             guids_to_exclude = exclude_extra
 
-            for name,df in assets.items():
+            for name, df in assets.items():
                 print(f"{name} --- {df.shape}")
             assets = {
                 name: df.loc[~df[global_vars.gisib_id_col].isin(guids_to_exclude)]
                 for name, df in assets.items()
             }
             print("--- after excluding guids ---")
-            for name,df in assets.items():
+            for name, df in assets.items():
                 print(f"{name} --- {df.shape}")
-
-    validator = GisibValidator(
-        assets=assets,
-        gisib_id_col=global_vars.gisib_id_col,
-        relatieve_hoogteligging_col=global_vars.gisib_hoogteligging_col,
-        objecttype_col=global_vars.gisib_objecttype_col,
-        gpkg_path=f"{global_vars.today}_overlaps_{'_'.join(input_gebieden).lower()}.gpkg",
-    )
-    # hierin staan de overlappingen geodataframe
-
-    overlaps_gisib = validator.run_all_validations(write=write_overlaps)
-
-
-    if overlaps_gisib.empty or create_manual_buckets:
-    # if True:
-        controller = Controller(
+    if create_overlaps:
+        validator = GisibValidator(
             assets=assets,
-            bgt=bgt,
             gisib_id_col=global_vars.gisib_id_col,
-            bgt_id_col=global_vars.bgt_id_col,
-            gisib_hoogteligging_col=global_vars.gisib_hoogteligging_col,
-            bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col,
+            relatieve_hoogteligging_col=global_vars.gisib_hoogteligging_col,
+            objecttype_col=global_vars.gisib_objecttype_col,
+            gpkg_path=f"{global_vars.today}_overlaps_{'_'.join(input_gebieden).lower()}.gpkg",
         )
+        # hierin staan de overlappingen geodataframe
 
-        automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
-        buckets_to_process = controller.filtered_buckets(
-            bucket_type="manual", automatic_bucket_values=automatic_buckets
-        )
-        # check of er nog manuele handelingen nodig zijn, zo nee return False
-        # Als er nog wat moet gebeuren is process_required = True, en gaat die niet verder.
-        process_required = should_process_buckets(
-            buckets_to_process,
-            type_col=global_vars.TYPE_COL_GISIB,
-            skip_types=global_vars.SKIP_TYPES,
-        )
+        overlaps_gisib = validator.run_all_validations(write=write_overlaps)
 
-        # I have checked them
-        # process_required = False
-
-        # hier schrijf je de buckets weg die manueel beoordeeld moeten worden?
-        if write_manual_buckets:
-            controller.write_manual_buckets_to_geopackages(directory=f"{global_vars.today}_{'_'.join(input_gebieden).lower()}",
-                                                       automatic_bucket_values=automatic_buckets)
-
-        if not process_required or create_invalid_types:
-            auto_buckets = controller.filtered_buckets(
-                bucket_type="automatic", automatic_bucket_values=automatic_buckets
+        if overlaps_gisib.empty or create_manual_buckets:
+            # if True:
+            controller = Controller(
+                assets=assets,
+                bgt=bgt,
+                gisib_id_col=global_vars.gisib_id_col,
+                bgt_id_col=global_vars.bgt_id_col,
+                gisib_hoogteligging_col=global_vars.gisib_hoogteligging_col,
+                bgt_hoogteligging_col=global_vars.bgt_hoogteligging_col,
             )
-            invalid_type_combinations, filtered_auto_buckets = (
-                get_invalid_combinations_by_control_table(
-                    buckets=auto_buckets,
-                    control_df=controle_tabel,
-                    guid_column=global_vars.gisib_id_col,
-                    bgt_column = global_vars.bgt_id_col,
-                    overlap_bgt_column = "overlap_bgt",
-                    overlap_gisib_column = "overlap_gisib",
-                    verbose=False,
-                )
 
+            automatic_buckets = [bucket.value for bucket in ALL_AUTOMATIC_BUCKETS]
+            buckets_to_process = controller.filtered_buckets(
+                bucket_type="manual", automatic_bucket_values=automatic_buckets
             )
-            if create_invalid_types:
-                invalid_types = write_invalid_types_to_geodataframe(
-                    assets=assets,  # {'verhardingen': gdf1, 'groenobjecten': gdf2, ...}
-                    bgt=bgt,
-                    invalid_type_combinations=invalid_type_combinations,
-                    gisib_id_column=global_vars.gisib_id_col,
-                    bgt_id_column=global_vars.bgt_id_col,
-                    skip_types=global_vars.SKIP_TYPES,  # optional
-                    skip_types_column=global_vars.TYPE_COL_GISIB,  # or whatever your type column is called
-                    output_path=f"output/{global_vars.today}_{'_'.join(input_gebieden)}_invalid_types.gpkg",  # optional; omit if you don't want to write
-                    gisib_layer="gisib",
-                    bgt_layer="bgt",
-                    write=write_invalid_types
+            # check of er nog manuele handelingen nodig zijn, zo nee return False
+            # Als er nog wat moet gebeuren is process_required = True, en gaat die niet verder.
+            process_required = should_process_buckets(
+                buckets_to_process,
+                type_col=global_vars.TYPE_COL_GISIB,
+                skip_types=global_vars.SKIP_TYPES,
+            )
+
+            # I have checked them
+            # process_required = False
+
+            # hier schrijf je de buckets weg die manueel beoordeeld moeten worden?
+            if write_manual_buckets:
+                controller.write_manual_buckets_to_geopackages(
+                    directory=f"{global_vars.today}_{'_'.join(input_gebieden).lower()}",
+                    automatic_bucket_values=automatic_buckets,
                 )
 
-            if write_import_files:
-                output_dir = f"output/{'_'.join(input_gebieden)}_{global_vars.today}".replace(
-                    " ", "_"
+            if not process_required or create_invalid_types:
+                auto_buckets = controller.filtered_buckets(
+                    bucket_type="automatic", automatic_bucket_values=automatic_buckets
                 )
-                # Create the directory
-                os.makedirs(output_dir, exist_ok=True)
-                logger.info(f"Created output directory: {output_dir}")
-                # Load assets
-                assets_all_columns = load_assets(
-                    filter_polygon=filter_polygon, gebied_col=gebied_col, gebieden=input_gebieden, negate=negate,use_schema_columns=False
+                invalid_type_combinations, filtered_auto_buckets = (
+                    get_invalid_combinations_by_control_table(
+                        buckets=auto_buckets,
+                        control_df=controle_tabel,
+                        guid_column=global_vars.gisib_id_col,
+                        bgt_column=global_vars.bgt_id_col,
+                        overlap_bgt_column="overlap_bgt",
+                        overlap_gisib_column="overlap_gisib",
+                        verbose=False,
+                    )
                 )
-                if invalid_type_combinations:
+                if create_invalid_types:
+                    invalid_types = write_invalid_types_to_geodataframe(
+                        assets=assets,  # {'verhardingen': gdf1, 'groenobjecten': gdf2, ...}
+                        bgt=bgt,
+                        invalid_type_combinations=invalid_type_combinations,
+                        gisib_id_column=global_vars.gisib_id_col,
+                        bgt_id_column=global_vars.bgt_id_col,
+                        skip_types=global_vars.SKIP_TYPES,  # optional
+                        skip_types_column=global_vars.TYPE_COL_GISIB,  # or whatever your type column is called
+                        output_path=f"output/{global_vars.today}_{'_'.join(input_gebieden)}_invalid_types.gpkg",  # optional; omit if you don't want to write
+                        gisib_layer="gisib",
+                        bgt_layer="bgt",
+                        write=write_invalid_types,
+                    )
 
-                    guid_invalid = [g["guid"] for asset in invalid_type_combinations for g in invalid_type_combinations[asset]]
-                    assets_all_columns = {
-                        asset: df.loc[
-                            lambda d: ~d.loc[:, global_vars.gisib_id_col].isin(guid_invalid)
-                        ].copy()
-                        for asset, df in assets_all_columns.items()
-                        if global_vars.gisib_id_col in df.columns
-                    }
+                if write_import_files:
+                    output_dir = f"output/{'_'.join(input_gebieden)}_{global_vars.today}".replace(
+                        " ", "_"
+                    )
+                    # Create the directory
+                    os.makedirs(output_dir, exist_ok=True)
+                    logger.info(f"Created output directory: {output_dir}")
+                    # Load assets
+                    assets_all_columns = load_assets(
+                        filter_polygon=filter_polygon,
+                        gebied_col=gebied_col,
+                        gebieden=input_gebieden,
+                        negate=negate,
+                        use_schema_columns=False,
+                    )
+                    if invalid_type_combinations:
 
-                    # assets_all_columns
+                        guid_invalid = [
+                            g["guid"]
+                            for asset in invalid_type_combinations
+                            for g in invalid_type_combinations[asset]
+                        ]
+                        assets_all_columns = {
+                            asset: df.loc[
+                                lambda d: ~d.loc[:, global_vars.gisib_id_col].isin(
+                                    guid_invalid
+                                )
+                            ].copy()
+                            for asset, df in assets_all_columns.items()
+                            if global_vars.gisib_id_col in df.columns
+                        }
 
-                process_and_export_per_asset_mode(
-                    filtered_auto_buckets=filtered_auto_buckets,
-                    gisib_datasets=assets_all_columns,
-                    gisib_id_col=global_vars.gisib_id_col,
-                    bgt_id_col=global_vars.bgt_id_col,
-                    output_dir=output_dir,
-                )
+                        # assets_all_columns
 
-                # check if the output is correct
-                validate_excel_matches(
-                    output_dir=output_dir,
-                    asset_all_columns=assets_all_columns,
-                    buckets_to_process=buckets_to_process,
-                    invalid_type_combinations=invalid_type_combinations,
-                    gisib_id_col=global_vars.gisib_id_col,
-                    bgt_id_col=global_vars.bgt_id_col
-                )
-            # end
+                    process_and_export_per_asset_mode(
+                        filtered_auto_buckets=filtered_auto_buckets,
+                        gisib_datasets=assets_all_columns,
+                        gisib_id_col=global_vars.gisib_id_col,
+                        bgt_id_col=global_vars.bgt_id_col,
+                        output_dir=output_dir,
+                    )
+
+                    # check if the output is correct
+                    validate_excel_matches(
+                        output_dir=output_dir,
+                        asset_all_columns=assets_all_columns,
+                        buckets_to_process=buckets_to_process,
+                        invalid_type_combinations=invalid_type_combinations,
+                        gisib_id_col=global_vars.gisib_id_col,
+                        bgt_id_col=global_vars.bgt_id_col,
+                    )
+                # end
