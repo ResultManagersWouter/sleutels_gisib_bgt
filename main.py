@@ -121,9 +121,10 @@ if __name__ == "__main__":
                 guids_to_exclude += exclude_extra
         else:
             guids_to_exclude = exclude_extra
-
+        if guids_to_exclude:
             for name, df in assets.items():
                 print(f"{name} --- {df.shape}")
+
             assets = {
                 name: df.loc[~df[global_vars.gisib_id_col].isin(guids_to_exclude)]
                 for name, df in assets.items()
