@@ -100,6 +100,11 @@ if __name__ == "__main__":
         filter_polygon=filter_polygon,
         negate=negate,
     )
+    # opmerking Arjen, streepjes in de BGT column eruit halen.
+    bgt[global_vars.bgt_id_col] = bgt[global_vars.bgt_id_col].str.replace(
+        "-", "", regex=False
+    )
+
     # Load assets
     assets = load_assets(
         filter_polygon=filter_polygon,
