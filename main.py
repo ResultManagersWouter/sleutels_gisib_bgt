@@ -28,8 +28,8 @@ from gebieden import gebieden
 # user input:
 input_gebieden = [
     #    'Centrum',
-    "Bos",
-    # "Nieuw-West",
+    # "Bos",
+    "Nieuw-West",
     # 'Noord',
     # 'Oost',
     # 'Weesp',
