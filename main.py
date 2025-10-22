@@ -28,7 +28,8 @@ from gebieden import gebieden
 # user input:
 input_gebieden = [
     #    'Centrum',
-    "Nieuw-West",
+    "Bos",
+    # "Nieuw-West",
     # 'Noord',
     # 'Oost',
     # 'Weesp',
@@ -41,7 +42,7 @@ input_gebieden = [
 # negate = False = intersection met de input gebieden
 # negate = True = alles behalve de intersection met input gebieden
 negate = False
-exclude_guids = True
+exclude_guids = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
 create_overlaps = False

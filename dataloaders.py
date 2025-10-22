@@ -7,14 +7,17 @@ from columns_config import ASSET_SCHEMAS
 import geopandas as gpd
 import fiona
 import logging
-from typing import Optional, Union, List, Tuple,Dict
+from typing import Optional, Union, List, Tuple, Dict
 from shapely.geometry import Polygon
 from shapely import make_valid
 
 
 logger = logging.getLogger(__name__)
 
-def _read_bgt_shapes(folder: str, columns: list[str],filter_polygon,negate: bool = False):
+
+def _read_bgt_shapes(
+    folder: str, columns: list[str], filter_polygon, negate: bool = False
+):
     """
     Reads shapefiles from a given folder and returns a GeoDataFrame containing specified columns.
 
@@ -46,14 +49,13 @@ def _read_bgt_shapes(folder: str, columns: list[str],filter_polygon,negate: bool
     return pd.concat(gdfs, ignore_index=True)
 
 
-
 def read_bgt_shapes(
     folder: str,
     columns: List[str],
     objecttypes: List[str],
     object_col: str,
-    filter_polygon: Polygon= None,
-    negate : bool = False,
+    filter_polygon: Polygon = None,
+    negate: bool = False,
 ) -> gpd.GeoDataFrame:
     """
     Reads shapefiles from a folder and returns a GeoDataFrame filtered to specific BGT object types.
@@ -83,10 +85,12 @@ def read_bgt_shapes(
     """
 
     # Read (expects helper to select `columns` and optionally apply bbox)
-    gdf = _read_bgt_shapes(folder=folder, columns=columns, filter_polygon=filter_polygon,negate=negate)
+    gdf = _read_bgt_shapes(
+        folder=folder, columns=columns, filter_polygon=filter_polygon, negate=negate
+    )
 
     # Validate requested object types up-front
-    ALLOWED_BGT_OBJECTTYPES = set(gdf.loc[:,object_col].unique())
+    ALLOWED_BGT_OBJECTTYPES = set(gdf.loc[:, object_col].unique())
     invalid_requested = set(objecttypes) - ALLOWED_BGT_OBJECTTYPES
     if invalid_requested:
         logger.warning(
@@ -95,7 +99,9 @@ def read_bgt_shapes(
 
     # Ensure required column exists
     if object_col not in gdf.columns:
-        raise KeyError(f"`object_col` '{object_col}' not found in columns: {list(gdf.columns)}")
+        raise KeyError(
+            f"`object_col` '{object_col}' not found in columns: {list(gdf.columns)}"
+        )
 
     # Make geometries valid
     gdf["geometry"] = gdf.geometry.apply(make_valid)
@@ -120,14 +126,16 @@ def read_bgt_shapes(
 
     # Filter and return
     return gdf.loc[gdf[object_col].isin(objecttypes)].copy()
+
+
 def read_gisib(
     fp_gisib: str,
-    layer: Optional[Union[str, 'AssetType']] = None,
+    layer: Optional[Union[str, "AssetType"]] = None,
     columns: Optional[List[str]] = None,
     filter_polygon: Optional[Union[Tuple[float, float, float, float], Polygon]] = None,
     filter_column: Optional[str] = None,
     filter_value: Optional[Union[str, float, int]] = None,
-    negate : bool = str,
+    negate: bool = str,
 ) -> gpd.GeoDataFrame:
     """
     Reads a GISIB dataset layer using pyogrio and returns a cleaned GeoDataFrame.
@@ -160,14 +168,20 @@ def read_gisib(
         layer_name = layer
 
     # Determine casing and mapping
-    first_column = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", rows=1).columns[0]
+    first_column = gpd.read_file(
+        fp_gisib, layer=layer_name, engine="pyogrio", rows=1
+    ).columns[0]
     mapper = column_mappings.get(layer, {})
     if first_column.islower():
-        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=columns)
+        gdf = gpd.read_file(
+            fp_gisib, layer=layer_name, engine="pyogrio", columns=columns
+        )
         gdf = gdf.rename(columns=mapper)
     elif first_column.isupper():
         mapped_columns = [mapper.get(col) for col in columns] if columns else None
-        gdf = gpd.read_file(fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns)
+        gdf = gpd.read_file(
+            fp_gisib, layer=layer_name, engine="pyogrio", columns=mapped_columns
+        )
 
     # Geometry filter
     if filter_polygon is not None:
@@ -190,7 +204,11 @@ def read_gisib(
 
 
 def read_controle_tabel(
-    filepath: str, columns: List[str], filterEnum: Enum, filter_col: str,mapping : dict,
+    filepath: str,
+    columns: List[str],
+    filterEnum: Enum,
+    filter_col: str,
+    mapping: dict,
 ) -> pd.DataFrame:
     """
     Reads and filters an Excel control table based on a specific column and Enum filter.
@@ -224,12 +242,17 @@ def read_controle_tabel(
     >>> read_controle_tabel('data.xlsx', ['id', 'status'], Status, 'status')
     """
     enum_values = [e.value for e in filterEnum]
-    df = pd.read_excel(filepath).loc[
-        lambda df: df[filter_col].isin(enum_values), columns
-    ].rename(columns=mapping)
+    df = (
+        pd.read_excel(filepath)
+        .loc[lambda df: df[filter_col].isin(enum_values), columns]
+        .rename(columns=mapping)
+    )
     return df
 
-def read_gebied(filepath: str, gebieden: list[str]) -> Tuple[float, float, float, float]:
+
+def read_gebied(
+    filepath: str, gebieden: list[str]
+) -> Tuple[float, float, float, float]:
     """
     Reads a GeoDataFrame from the specified file and extracts the bounding box
     for features that match the given 'gebied' value.
@@ -255,7 +278,6 @@ def read_gebied(filepath: str, gebieden: list[str]) -> Tuple[float, float, float
         logging.info(gdf.naam.unique())
         raise ValueError(f"No features found with naam = '{gebieden}'")
 
-
     return selection.geometry.unary_union
 
 
@@ -264,7 +286,7 @@ def load_assets(
     gebied_col: str = "gebied",
     gebieden: Optional[str] = None,
     use_schema_columns: bool = True,
-    negate : bool = False,
+    negate: bool = False,
 ) -> Dict[str, gpd.GeoDataFrame]:
     """
     Load all GISIB asset layers filtered by bbox and gebied.
@@ -281,7 +303,9 @@ def load_assets(
     return {
         AssetType.TERREINDEEL.value: read_gisib(
             fp_gisib=os.environ.get("FP_TRD"),
-            columns=ASSET_SCHEMAS[AssetType.TERREINDEEL] if use_schema_columns else None,
+            columns=(
+                ASSET_SCHEMAS[AssetType.TERREINDEEL] if use_schema_columns else None
+            ),
             layer=AssetType.TERREINDEEL,
             filter_polygon=filter_polygon,
             filter_column=gebied_col,
@@ -290,7 +314,9 @@ def load_assets(
         ),
         AssetType.GROENOBJECTEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_GRN"),
-            columns=ASSET_SCHEMAS[AssetType.GROENOBJECTEN] if use_schema_columns else None,
+            columns=(
+                ASSET_SCHEMAS[AssetType.GROENOBJECTEN] if use_schema_columns else None
+            ),
             layer=AssetType.GROENOBJECTEN,
             filter_polygon=filter_polygon,
             filter_column=gebied_col,
@@ -299,7 +325,9 @@ def load_assets(
         ),
         AssetType.VERHARDINGEN.value: read_gisib(
             fp_gisib=os.environ.get("FP_VRH"),
-            columns=ASSET_SCHEMAS[AssetType.VERHARDINGEN] if use_schema_columns else None,
+            columns=(
+                ASSET_SCHEMAS[AssetType.VERHARDINGEN] if use_schema_columns else None
+            ),
             layer=AssetType.VERHARDINGEN,
             filter_polygon=filter_polygon,
             filter_column=gebied_col,
@@ -307,4 +335,3 @@ def load_assets(
             negate=negate,
         ),
     }
-
