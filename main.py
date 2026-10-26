@@ -45,9 +45,9 @@ negate = False
 exclude_guids = False
 
 # Geef hier aan of je de buckets wilt maken. Als je dingen weg wilt schrijven, zorg er dan wel voor dat alles op True staat
-create_overlaps = False
-create_manual_buckets = False
-create_invalid_types = False
+create_overlaps = True
+create_manual_buckets = True
+create_invalid_types = True
 
 # Geef aan of je het weg wilt schrijven.
 write_overlaps = False

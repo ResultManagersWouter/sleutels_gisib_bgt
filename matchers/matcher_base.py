@@ -6,6 +6,7 @@ import pandas as pd
 import logging
 import global_vars
 from buckets import BucketsBase,AUTOMATIC_BUCKETS
+from .filter_matches import filter_preferred_bgt_objecttype, preferred_bgt_objecttype
 logger = logging.getLogger(__name__)
 class MatcherBase:
     """
@@ -162,12 +163,16 @@ class MatcherBase:
 
     def preprocess(self) -> GeoDataFrame:
         """
-        Pipeline: overlay, min_ratio filtering, intersection counts, and perfect/rel matching.
+        Pipeline: overlay, min_ratio filtering, preferred BGT objecttype filtering (hagen/zand),
+        intersection counts, and perfect/rel matching.
         Returns:
             Final GeoDataFrame for downstream bucketing.
         """
         overlay = self.calculate_overlap_df()
         filtered = self.filter_overlap_min_ratio(overlay)
+        filtered = filter_preferred_bgt_objecttype(
+            filtered, gisib_id_col=self.gisib_id_col, bgt_id_col=self.bgt_id_col, label=self.__class__.__name__
+        )
         with_counts = self.add_intersection_counts(filtered)
         return self.get_perfect_rel_matches(with_counts)
 
@@ -315,19 +320,37 @@ class MatcherBase:
         mask = ((intersection_df["overlap_bgt"] > 0.75) & (intersection_df["overlap_gisib"] > 0.75))
         geom_matches = intersection_df[mask]
         # assert every gisib_id is unique in matches
-        if not geom_matches.empty:
-            # als er een assert function hier zit is het waarschijnlijk een mismatch met de hagen?
-            # Voer de volgende print statements, check in welke laag deze zit, als het groenobjecten is, moet je in de matcher_Groenobjecten
-            # het matchingspercentage van de hagen eventueel aanpassen. Laat zien wat het huidige percentage is in de onderstaande statements
-        #   # vul zelf de guid even in.
-
-            if geom_matches[self.gisib_id_col].value_counts().max() > 1:
-                dup_counts = geom_matches[self.gisib_id_col].value_counts()
-                duplicates = geom_matches.loc[geom_matches[self.gisib_id_col].isin(dup_counts[dup_counts > 1].index),[self.gisib_id_col,self.bgt_id_col,"OBJECTTYPE","TYPE","ObjectType"]]
-                print(duplicates)
-                print(duplicates.loc[:,self.gisib_id_col].unique())
-                if not geom_matches[self.gisib_id_col].value_counts().max() == 1:
-                    raise AssertionError("1 gisib object heeft een geometrische match met meerdere BGT objecten")
+        dup_counts = geom_matches[self.gisib_id_col].value_counts()
+        dup_guids = dup_counts[dup_counts > 1].index
+        if len(dup_guids) > 0:
+            # Meestal een GISIB object op gestapelde BGT objecten (bv. haag op zand). Kijk naar TYPE/ObjectType
+            # hieronder en voeg het TYPE toe aan PREFERRED_BGT_OBJECTTYPE in global_vars, of pas TRESHOLD_HAGEN aan.
+            cols = [self.gisib_id_col, self.bgt_id_col, "OBJECTTYPE", "TYPE", "TYPE_GEDETAILLEERD", "ObjectType",
+                    "overlap_gisib", "overlap_bgt"]
+            cols = [c for c in cols if c in geom_matches.columns]
+            duplicates = geom_matches.loc[geom_matches[self.gisib_id_col].isin(dup_guids)]
+            print(f"\n========== DEBUG geom_match assert: {self.__class__.__name__} ==========")
+            print(f"{len(dup_guids)} gisib objecten met > 75% overlap met meerdere BGT objecten.")
+            print("voorkeur_bgt = regel uit PREFERRED_BGT_OBJECTTYPE (NaN = geen regel voor dit TYPE):")
+            print(
+                duplicates.assign(voorkeur_bgt=preferred_bgt_objecttype(duplicates))
+                .loc[:, cols + ["voorkeur_bgt"]]
+                .sort_values(self.gisib_id_col)
+                .round(3)
+                .to_string()
+            )
+            print("Alle overlappingen van deze objecten (ook < 75%), max 5 objecten:")
+            voorbeeld = list(dup_guids[:5])
+            print(
+                intersection_df.loc[intersection_df[self.gisib_id_col].isin(voorbeeld), cols]
+                .sort_values(self.gisib_id_col)
+                .round(3)
+                .to_string()
+            )
+            raise AssertionError(
+                f"{len(dup_guids)} gisib object(en) hebben een geometrische match met meerdere BGT objecten, "
+                f"zie de print hierboven"
+            )
         remaining = intersection_df[~intersection_df[self.gisib_id_col].isin(geom_matches[self.gisib_id_col].unique())]
 
         return geom_matches, remaining
